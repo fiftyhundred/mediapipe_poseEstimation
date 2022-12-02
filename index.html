@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <title>mediapipe pose</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=9">
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils_3d/control_utils_3d.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+
+</head>
+<body>
+<div class="container">
+    <video class="input_video" src="0_2.mp4" muted crossorigin="anonymous" hidden></video>
+    <canvas class="output_canvas" width="1280px" height="720px"></canvas>
+    <div class="landmark-grid-container"></div>
+    <div id="angle"></div>
+</div>
+
+<script type="module">
+    const videoElement = document.getElementsByClassName('input_video')[0];
+    const canvasElement = document.getElementsByClassName('output_canvas')[0];
+    const canvasCtx = canvasElement.getContext("2d");
+    const angleElement = document.getElementById("angle");
+    const landmarkContainer = document.getElementsByClassName('landmark-grid-container')[0];
+    const grid = new LandmarkGrid(landmarkContainer,{
+        connectionColor: 0xCCCCCC,
+        definedColors:
+            [{name: 'LEFT', value: 0xffa500}, {name: 'RIGHT', value: 0x00ffff}],
+        range: 2,
+        fitToGrid: true,
+        labelSuffix: 'm',
+        landmarkSize: 2,
+        numCellsPerAxis: 4,
+        showHidden: false,
+        centered: true,
+    });
+
+    var starttime = new Date();
+    var writing = "";
+    var oncedownload = true;
+
+    //取得したい角度のポイント
+    //もちろん真ん中が原点となるポイントになるように書いてね
+    //関節スコアの参照 -> https://google.github.io/mediapipe/solutions/pose.html#pose-landmark-model-blazepose-ghum-3d
+    const needVector = {
+        // "rightUde":[12,14,16],
+        // "leftUde":[11,13,15],
+        "rightElbow":[12,14,16],
+        "leftElbow":[11,13,15],
+    };
+
+
+    //角度の計算
+    function calcAngle(pose1,pose2,pose3){
+        // please learn here -> https://npm.runkit.com/%40mediapipe%2Fpose
+
+        const vector1 = {
+            x:Math.round((pose1.x-pose2.x)*1000000)/1000000,
+            y:Math.round((pose1.y-pose2.y)*1000000)/1000000,
+            z:Math.round((pose1.z-pose2.z)*1000000)/1000000,
+            visibility:Math.min(pose1.visibility,pose2.visibility),
+        }
+        const vector2 = {
+            x:Math.round((pose3.x-pose2.x)*1000000)/1000000,
+            y:Math.round((pose3.y-pose2.y)*1000000)/1000000,
+            z:Math.round((pose3.z-pose2.z)*1000000)/1000000,
+            visibility:Math.min(pose3.visibility,pose2.visibility),
+        }
+        console.log("arrived vector",vector1,vector2)
+        return {
+            angle: Math.acos((vector1.x * vector2.x + vector1.y * vector2.y + vector1.z * vector2.z) / ( Math.sqrt(vector1.x**2 + vector1.y**2 + vector1.z**2) * Math.sqrt(vector2.x**2 + vector2.y**2 + vector2.z**2))) * 180 / Math.PI,
+            visibility: Math.min(vector1.visibility, vector2.visibility),
+            "vector1":vector1,
+            "vector2":vector2,
+
+        };
+
+    }
+
+function download_txt(file_name, data) {
+    const blob = new Blob([data], {type: 'text/plain'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    document.body.appendChild(a);
+    a.download = file_name;
+    a.href = url;
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+}
+
+    function onResults(results) {
+        if (!results.poseLandmarks) {
+            grid.updateLandmarks([]);
+            return;
+        }
+
+        canvasCtx.save();
+        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+        // canvasCtx.drawImage(results.segmentationMask, 0, 0,
+        //     canvasElement.width, canvasElement.height);
+
+        // Only overwrite existing pixels.
+        canvasCtx.globalCompositeOperation = 'source-in';
+        canvasCtx.fillStyle = '#00FF00';
+        canvasCtx.fillRect(0, 0, canvasElement.width, canvasElement.height);
+
+        // Only overwrite missing pixels.
+        canvasCtx.globalCompositeOperation = 'destination-atop';
+        canvasCtx.drawImage(
+            results.image, 0, 0, canvasElement.width, canvasElement.height);
+
+        canvasCtx.globalCompositeOperation = 'source-over';
+        drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS,
+            {color: '#00FF00', lineWidth: 4});
+        drawLandmarks(canvasCtx, Object.values(POSE_LANDMARKS_NEUTRAL)
+                .map(index => results.poseLandmarks[index]),
+            {color: '#00FF00', lineWidth: 2});
+        drawLandmarks(canvasCtx, Object.values(POSE_LANDMARKS_LEFT)
+                .map(index => results.poseLandmarks[index]),
+            {color: '#FF0000', lineWidth: 2});
+        drawLandmarks(canvasCtx, Object.values(POSE_LANDMARKS_RIGHT)
+                .map(index => results.poseLandmarks[index]),
+            {color: '#0000FF', lineWidth: 2});
+        canvasCtx.restore();
+
+        if(results.poseWorldLandmarks){
+            const resultAngle ={};
+            var now = new Date();
+            var sec = (now.getTime() - starttime.getTime())/1000;
+
+            var resulttxt=String(sec);
+
+            /*resulttxt = resulttxt+ ",rightShoulder," + String(results.poseWorldLandmarks[12].x) + ","+String(results.poseWorldLandmarks[12].y);
+            resulttxt = resulttxt+ ",leftShoulder," + String(results.poseWorldLandmarks[11].x) + ","+String(results.poseWorldLandmarks[11].y);
+            resulttxt = resulttxt+ ",rightHip," + String(results.poseWorldLandmarks[24].x) + ","+String(results.poseWorldLandmarks[24].y);
+            resulttxt = resulttxt+ ",leftHip," + String(results.poseWorldLandmarks[23].x) + ","+String(results.poseWorldLandmarks[23].y);
+            */
+
+            for (let key in needVector){
+                resultAngle[key] = calcAngle(results.poseWorldLandmarks[needVector[key][0]],results.poseWorldLandmarks[needVector[key][1]],results.poseWorldLandmarks[needVector[key][2]]);
+                resulttxt = resulttxt+ "," + String(key) + "," + String(resultAngle[key].angle) + "," + String(resultAngle[key].visibility);
+            }
+            angleElement.innerHTML = resulttxt;//JSON.stringify(resultAngle);
+            writing = writing + resulttxt + "\n";
+        }
+
+        grid.updateLandmarks(results.poseWorldLandmarks);
+    }
+
+    const pose = new Pose({locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
+        }});
+    pose.setOptions({
+        modelComplexity: 1,
+        smoothLandmarks: true,
+        enableSegmentation: true,
+        smoothSegmentation: true,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5
+    });
+    pose.onResults(onResults);
+
+    async function onFrame() {
+      if (videoElement.ended && oncedownload){
+        //download_txt("training2_0.csv", writing);
+        oncedownload = false;
+      }
+      if (!videoElement.paused && !videoElement.ended) {
+        await pose.send({
+          image: videoElement
+        });
+      // https://stackoverflow.com/questions/65144038/how-to-use-requestanimationframe-with-promise
+        await new Promise(requestAnimationFrame);
+        onFrame();
+      } else
+        setTimeout(onFrame, 500);
+    }
+
+    //videoElement.src = "./0_2.mp4";
+    videoElement.onloadeddata = (evt) => {
+      let video = evt.target;
+      canvasElement.width = video.videoWidth;
+      canvasElement.height = video.videoHeight;
+      videoElement.play();
+      onFrame();
+    }
+    /*const camera = new Camera(videoElement, {
+        onFrame: async () => {
+            await pose.send({image: videoElement});
+        },
+        width: 1280,
+        height: 720
+    });*/
+    //camera.start();
+</script>
+</body>
+</html>
