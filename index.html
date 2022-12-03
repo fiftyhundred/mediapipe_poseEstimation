@@ -200,8 +200,8 @@
         //ボタンを押したらCSV出力
         const finButton = document.getElementById('fin');
         finButton.addEventListener('click', function () {
-            cellDrive(items, cells);//Driveにアップロード
-            // cellDownload(items,cells);//localにダウンロード
+            //cellDrive(items, cells);//Driveにアップロード
+             cellDownload(items,cells);//localにダウンロード
             const user = Object.fromEntries(new URLSearchParams(window.location.search)).user.split(",");
             console.log(user);
         });
