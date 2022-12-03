@@ -192,7 +192,7 @@
 
             // (3)HTTPのGETメソッドとアクセスする場所を指定
             xmlHttpRequest.open('POST', 'https://script.google.com/macros/s/AKfycbzu6jjvgWIkFBZNyB8DS4w31KnWx8TAXxOWhYUt7PmVvGvitHD_IZ1mh8IGVJz20Arw/exec', true);
-
+            //xmlHttpRequest.responseType = "text";
             // (4)HTTPリクエストを送信
             xmlHttpRequest.send(formData);
         }
@@ -323,6 +323,7 @@
         height: 720
     });*/
     //camera.start();
+    cellMake();
 </script>
 </body>
 </html>
