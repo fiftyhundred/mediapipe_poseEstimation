@@ -18,6 +18,7 @@
     <canvas class="output_canvas" width="1280px" height="720px"></canvas>
     <div class="landmark-grid-container"></div>
     <div id="angle"></div>
+    <button id="fin">Fin</button>
 </div>
 
 <script type="module">
@@ -81,7 +82,131 @@
 
     }
 
-function download_txt(file_name, data) {
+    function facehide(canvasElement, img, nose, left_ear, right_ear) {
+            let width = canvasElement.width * Math.abs(left_ear.x - right_ear.x) * 3;
+            let height = width * Math.round(img.height / img.width);
+            let x = Math.round(nose.x * canvasElement.width) - (width / 2);
+            let y = Math.round(nose.y * canvasElement.height) - (height / 2);
+
+            return {
+                'x': x,
+                'y': y,
+                'width': width,
+                'height': height,
+            };
+        }
+
+        //11/15
+        const cells = []
+        const items = 6;
+        function cellMake() {
+            //タイムスタンプと共に角度とどの信頼度をセルにする
+            const cellTag = {
+                0: "時刻（日本）",
+                1: "leftAngle",
+                2: "rightAngle",
+                3: "Angle",
+                4: "visibility(left)",
+                5: "visibility(right)",
+            };
+            console.log(cellTag)
+            cells.push(cellTag);
+
+        }
+
+        function cellUpdate(leftAngle, rightAngle) {
+            //cellMakeにデータをぶち込む
+            const timeStamp = () => {
+                const today = new Date();
+                const yy = ('0000' + today.getFullYear()).slice(-4);
+                const mo = ('00' + (today.getMonth() + 1)).slice(-2);
+                const dd = ('00' + today.getDate()).slice(-2);
+                const hh = ('00' + today.getHours()).slice(-2);
+                const mi = ('00' + today.getMinutes()).slice(-2);
+                const ss = ('00' + today.getSeconds()).slice(-2);
+                const ms = ('000' + today.getMilliseconds()).slice(-3);
+
+                return yy + mo + dd + hh + mi + ss + ms;
+            }
+
+            const cell = {
+                0: timeStamp(),
+                1: leftAngle.angle,
+                2: rightAngle.angle,
+                3: (leftAngle.angle + rightAngle.angle) / 2,
+                4: leftAngle.visibility,
+                5: rightAngle.visibility,
+            }
+            cells.push(cell);
+
+        }
+
+        function cellDownload(items, cells) {
+            //cellをローカルに保存
+            let str = "";
+            for (let i = 0; i < cells.length; i++) {
+                let nowCell = cells[i];
+                for (let j = 0; j < items; j++) {
+                    str += nowCell[j];
+                    if (j === (items - 1)) {
+                        str += "\n";
+                    } else {
+                        str += ",";
+                    }
+                }
+            }
+            let blob = new Blob([str], { type: "text/csv" }); //配列に上記の文字列(str)を設定
+            let link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = "data.csv";
+            link.click();
+        }
+
+        function cellDrive(items, cells) {
+            let str = "";
+            for (let i = 0; i < cells.length; i++) {
+                let nowCell = cells[i];
+                for (let j = 0; j < items; j++) {
+                    str += nowCell[j];
+                    if (j === (items - 1)) {
+                        str += "\n";
+                    } else {
+                        str += ",";
+                    }
+                }
+            }
+
+            // (1)XMLHttpRequestオブジェクトを作成
+            var xmlHttpRequest = new XMLHttpRequest();
+            var formData = new FormData();
+
+            formData.append("str", str);
+            formData.append("user", Object.fromEntries(new URLSearchParams(window.location.search)).user)
+
+            // (2)onreadystatechangeイベントで処理の状況変化を監視
+            xmlHttpRequest.onreadystatechange = function () {
+                if (this.readyState === 4 && this.status === 200) {
+                    console.log("success!");
+                }
+            }
+
+            // (3)HTTPのGETメソッドとアクセスする場所を指定
+            xmlHttpRequest.open('POST', 'https://script.google.com/macros/s/1Z1q2fibKi7OMA9cKuxRUvYRaKYaVnpPvtjbJ8V5fdemmKJ-4tQaHGHVm/exec', true);
+
+            // (4)HTTPリクエストを送信
+            xmlHttpRequest.send(formData);
+        }
+
+        //ボタンを押したらCSV出力
+        const finButton = document.getElementById('fin');
+        finButton.addEventListener('click', function () {
+            cellDrive(items, cells);//Driveにアップロード
+            // cellDownload(items,cells);//localにダウンロード
+            const user = Object.fromEntries(new URLSearchParams(window.location.search)).user.split(",");
+            console.log(user);
+        });
+
+/*function download_txt(file_name, data) {
     const blob = new Blob([data], {type: 'text/plain'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -91,7 +216,7 @@ function download_txt(file_name, data) {
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
-}
+}*/
 
     function onResults(results) {
         if (!results.poseLandmarks) {
@@ -146,6 +271,7 @@ function download_txt(file_name, data) {
                 resulttxt = resulttxt+ "," + String(key) + "," + String(resultAngle[key].angle) + "," + String(resultAngle[key].visibility);
             }
             angleElement.innerHTML = resulttxt;//JSON.stringify(resultAngle);
+            cellUpdate(resultAngle.leftElbow, resultAngle.rightElbow);
             writing = writing + resulttxt + "\n";
         }
 
