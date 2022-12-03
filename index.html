@@ -191,7 +191,7 @@
             }
 
             // (3)HTTPのGETメソッドとアクセスする場所を指定
-            xmlHttpRequest.open('POST', 'https://script.google.com/macros/s/1Z1q2fibKi7OMA9cKuxRUvYRaKYaVnpPvtjbJ8V5fdemmKJ-4tQaHGHVm/exec', true);
+            xmlHttpRequest.open('POST', 'https://script.google.com/macros/s/AKfycbzu6jjvgWIkFBZNyB8DS4w31KnWx8TAXxOWhYUt7PmVvGvitHD_IZ1mh8IGVJz20Arw/exec', true);
 
             // (4)HTTPリクエストを送信
             xmlHttpRequest.send(formData);
@@ -200,8 +200,8 @@
         //ボタンを押したらCSV出力
         const finButton = document.getElementById('fin');
         finButton.addEventListener('click', function () {
-            //cellDrive(items, cells);//Driveにアップロード
-             cellDownload(items,cells);//localにダウンロード
+            cellDrive(items, cells);//Driveにアップロード
+            //cellDownload(items,cells);//localにダウンロード
             const user = Object.fromEntries(new URLSearchParams(window.location.search)).user.split(",");
             console.log(user);
         });
