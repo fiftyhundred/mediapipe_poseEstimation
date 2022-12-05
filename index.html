@@ -16,7 +16,7 @@
 <div class="container">
     <video class="input_video" muted crossorigin="anonymous" hidden></video>
     <canvas class="output_canvas" width="1280px" height="720px"></canvas>
-    <div class="landmark-grid-container"></div>
+    <div class="landmark-grid-container" hidden></div>
     <div id="angle"></div>
     <button id="start">Start</button>
     <button id="fin">Fin</button>
@@ -48,15 +48,20 @@
     var cnt = 0;
     var trainingPattern = 0.0;
     var imageNode = [];//画像の座標保管
+    var correct = 0;
 
 
     const Image = {
       "upallow":document.createElement('img'),
       "downallow":document.createElement('img'),
+      "circle":document.createElement('img'),
+      "cross":document.createElement('img'),
     };
 
     Image["upallow"].src = 'image/upallow.png';
     Image["downallow"].src = 'image/downallow.png';
+    Image["circle"].src = 'image/circle.png';
+    Image["cross"].src = 'image/cross.png';
 
     const SE = {
       0:new Audio('SE/start.mp3'),
@@ -76,7 +81,7 @@
     //取得したい角度のポイント
     //もちろん真ん中が原点となるポイントになるように書いてね
     //関節スコアの参照 -> https://google.github.io/mediapipe/solutions/pose.html#pose-landmark-model-blazepose-ghum-3d
-    const needVector = {
+    var needVector = {
         // "rightUde":[12,14,16],
         // "leftUde":[11,13,15],
         "rightElbow":[12,14,16],
@@ -145,6 +150,30 @@
         var swLengthFuture = Math.sqrt(ewLength**2+esLength**2-2*ewLength*esLength*Math.cos(140 / 180 * Math.PI));
 
         return {x:wrist.x,y:wrist.y-swLengthFuture};
+      }
+
+      function calcTraining(resultAngle){
+        switch (trainingPattern) {
+          case 2.1:
+            if(correct<0.5 && resultAngle.leftElbow.angle>=90 && resultAngle.leftElbow.angle<=110 && resultAngle.rightElbow.angle>=90 && resultAngle.rightElbow.angle<=110){
+              correct += 0.5;
+            }
+
+            if(correct>=0.5 && correct<0.8 &&  resultAngle.leftElbow.angle>=110 && resultAngle.rightElbow.angle>=110){
+              correct += 0.5;
+            }
+            break;
+          case 2.2:
+            if(correct<0.5 && resultAngle.leftElbow.angle>=90 && resultAngle.leftElbow.angle<=110 && resultAngle.rightElbow.angle>=90 && resultAngle.rightElbow.angle<=110){
+              correct += 0.5;
+            }
+            if(correct>=0.5 && correct<0.8 && resultAngle.leftElbow.angle<=90 && resultAngle.rightElbow.angle<=90){
+              correct += 0.5;
+            }
+            break;
+          default:
+
+        }
       }
 
 
@@ -266,6 +295,12 @@
               cnt = -1;
               var timer1 = setInterval(function(){playTrainingMusic(node,++cnt);playTrainingImage(node,cnt,pattern);},1000);
               setTimeout(function(){ clearInterval(timer1);},(node.length*4-2)*1000);
+              needVector = {
+                  // "rightUde":[12,14,16],
+                  // "leftUde":[11,13,15],
+                  "rightElbow":[12,14,16],
+                  "leftElbow":[11,13,15],
+              };
               break;
             default:
               break;
@@ -297,12 +332,17 @@
           }
         }
 
-        function startTrainingImage(pattern){
+        /*function startTrainingImage(pattern){
           setTimeout(function(){ trainingPattern = pattern; },1000);
           setTimeout(function(){ trainingPattern = 0.0; },38*1000);
-        }
+        }*/
 
         function drawTrainingImage(pL){
+          if(correct>=1){
+            canvasCtx.drawImage(Image["circle"],0,0,50,50);
+          }else if(correct<0){
+            canvasCtx.drawImage(Image["cross"],0,0,50,50);
+          }
           switch (trainingPattern) {
             case 2.0:
               //canvasCtx.drawImage(Image["upallow"],pL[POSE_LANDMARKS.RIGHT_WRIST].x*canvasElement.width,pL[POSE_LANDMARKS.RIGHT_WRIST].y*canvasElement.height,50,50);
@@ -315,7 +355,6 @@
               imageNode.push({x:leftElbowFuture.x*canvasElement.width,y:leftElbowFuture.y*canvasElement.height});
               trainingPattern = 2.1;
               trainingTimer = new Date();
-
               break;
             case 2.1:
               var now = new Date();
@@ -332,6 +371,11 @@
                 trainingPattern = 2.2;
                 imageNode.push({x:pL[POSE_LANDMARKS.RIGHT_WRIST].x*canvasElement.width,y:pL[POSE_LANDMARKS.RIGHT_WRIST].y*canvasElement.height});
                 imageNode.push({x:pL[POSE_LANDMARKS.LEFT_WRIST].x*canvasElement.width,y:pL[POSE_LANDMARKS.LEFT_WRIST].y*canvasElement.height});
+                if(correct<1){
+                  correct = -1;
+                }else{
+                  correct = 0.1;
+                }
                 console.log("2.1to2.2");
               }
               break;
@@ -349,6 +393,11 @@
                 trainingTimer = new Date();
                 trainingPattern = 0.0;
                 imageNode = [];
+                if(correct<1){
+                  correct = -1;
+                }else{
+                  correct = 0.1;
+                }
               }
 
               break;
@@ -363,6 +412,7 @@
           SE[0].currentTime = 0;
           SE[0].play();
           setTimeout(startTraining,3000,2.0);
+          correct = 0;
         });
 
 /*function download_txt(file_name, data) {
@@ -433,6 +483,9 @@
                 resultAngle[key] = calcAngle(results.poseWorldLandmarks[needVector[key][0]],results.poseWorldLandmarks[needVector[key][1]],results.poseWorldLandmarks[needVector[key][2]]);
                 resulttxt = resulttxt+ "," + String(key) + "," + String(resultAngle[key].angle) + "," + String(resultAngle[key].visibility);
             }
+            //console.log(resultAngle);
+            calcTraining(resultAngle);
+
             angleElement.innerHTML = resulttxt;//JSON.stringify(resultAngle);
             cellUpdate(resultAngle.leftElbow, resultAngle.rightElbow);
         }
