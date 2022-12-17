@@ -178,6 +178,12 @@
           }else{
             angle = resultAngle.leftKnee.angle;
           }
+        }else if(trainingPattern>=4 && trainingPattern<5){
+          if(trainingLR==1){
+            angle = resultAngle.rightHip.angle;
+          }else{
+            angle = resultAngle.leftHip.angle;
+          }
         }
         switch (trainingPattern) {
           case 1.1:
@@ -228,6 +234,24 @@
               correct += 0.5;
             }
             if(correct>=0.5 && correct<0.8 && resultAngle.leftElbow.angle<=120 && resultAngle.rightElbow.angle<=120){
+              correct += 0.5;
+            }
+            break;
+          case 4.1:
+            if(correct<0.5 && angle<=95){
+              correct += 0.5;
+            }
+
+            if(correct>=0.5 && correct<0.8 &&  angle>95){
+              correct += 0.5;
+            }
+            break;
+          case 4.3:
+            if(correct<0.5 && angle>=95){
+              correct += 0.5;
+            }
+
+            if(correct>=0.5 && correct<0.8 &&  angle<95){
               correct += 0.5;
             }
             break;
@@ -372,6 +396,19 @@
                   "leftElbow":[11,13,15],
               };
               break;
+            case 4.0:
+              var node = [-3,-1,2,3,4,5,6,7,8,11];
+              cnt = -1;
+              trainingLR = 1;
+              var timer1 = setInterval(function(){playTrainingMusic(node,++cnt);playTrainingImage(node,cnt,pattern);},1000);
+              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;},(node.length*4-1)*1000);
+              needVector = {
+                  // "rightUde":[12,14,16],
+                  // "leftUde":[11,13,15],
+                  "rightHip":[23,24,28],
+                  "leftHip":[24,23,27],
+              };
+              break;
             default:
               break;
           }
@@ -406,18 +443,18 @@
 
           switch (pattern) {
             case 1:
-            if(node[cnt%items]==-1){
-              trainingPattern = 1.0;
-            }else if(cnt%items==5){
-              trainingPattern = 1.2;
-            }else if(cnt%items==8){
-              trainingPattern = 1.4;
-            }else if(cnt%items==11){
-              trainingPattern = 1.6;
-            }else if(node[cnt%items]==11){
-              trainingPattern = 1.8;
-            }
-            break;
+              if(node[cnt%items]==-1){
+                trainingPattern = 1.0;
+              }else if(cnt%items==5){
+                trainingPattern = 1.2;
+              }else if(cnt%items==8){
+                trainingPattern = 1.4;
+              }else if(cnt%items==11){
+                trainingPattern = 1.6;
+              }else if(node[cnt%items]==11){
+                trainingPattern = 1.8;
+              }
+              break;
             case 2:
               if(node[cnt%items]==-1){
                 trainingPattern = 2.0;
@@ -425,6 +462,15 @@
                 trainingPattern = 2.2;
               }else if(node[cnt%items]==11){
                 trainingPattern = 2.4;
+              }
+              break;
+            case 4:
+              if(node[cnt%items]==-1){
+                trainingPattern = 4.0;
+              }else if(node[cnt%items]==5){
+                trainingPattern = 4.2;
+              }else if(node[cnt%items]==11){
+                trainingPattern = 4.4;
               }
               break;
             default:
@@ -446,17 +492,29 @@
           raCanvas.width = 256;
           raCanvas.height = 256;
           raCanvasCtx.clearRect(0, 0, raCanvas.width, raCanvas.height);
-          raCanvasCtx.beginPath();
-          raCanvasCtx.moveTo(raCanvas.width/2,raCanvas.height/2);
           if(anticlockwise==1){
-            raCanvasCtx.lineTo(0,raCanvas.height/2);
+            //raCanvasCtx.lineTo(0,raCanvas.height/2);
             imgstr = "roundallowRight";
             clockTF = true;
           }else{
-            raCanvasCtx.lineTo(raCanvas.width,raCanvas.height/2);
+            //raCanvasCtx.lineTo(raCanvas.width,raCanvas.height/2);
             imgstr = "roundallowLeft";
             clockTF = false;
           }
+          if(trainingPattern == 4.3){
+            if(trainingLR==1){
+              raCanvasCtx.translate( raCanvas.width/2, raCanvas.height/2 ) ;
+              raCanvasCtx.rotate( 90 * Math.PI / 180 ) ;
+              raCanvasCtx.translate( -raCanvas.width/2, -raCanvas.height/2 ) ;
+            }else{
+              raCanvasCtx.translate( raCanvas.width/2, raCanvas.height/2 ) ;
+              raCanvasCtx.rotate( 270 * Math.PI / 180 ) ;
+              raCanvasCtx.translate( -raCanvas.width/2, -raCanvas.height/2 ) ;
+            }
+          }
+          raCanvasCtx.beginPath();
+          raCanvasCtx.moveTo(raCanvas.width/2,raCanvas.height/2);
+          raCanvasCtx.lineTo(raCanvas.width/2*Math.cos(startAngle/180*Math.PI)+raCanvas.width/2,raCanvas.height/2*Math.sin(startAngle/180*Math.PI)+raCanvas.height/2);
           raCanvasCtx.arc(raCanvas.width/2,raCanvas.height/2,raCanvas.width/2,startAngle/180*Math.PI,endAngle/180*Math.PI,clockTF);
           raCanvasCtx.lineTo(raCanvas.width/2,raCanvas.height/2);
           raCanvasCtx.closePath();
@@ -575,7 +633,6 @@
               if(rate<=1.0){
                 canvasCtx.drawImage(Image["upallow"],imageNode[0].x-25,imageNode[0].y-(imageNode[0].y-imageNode[2].y)*rate-25,50,(imageNode[0].y-imageNode[2].y)*rate);
                 canvasCtx.drawImage(Image["upallow"],imageNode[1].x-25,imageNode[1].y-(imageNode[1].y-imageNode[3].y)*rate-25,50,(imageNode[1].y-imageNode[3].y)*rate);
-              }else{
               }
               break;
             case 2.2://肘曲げ設定
@@ -604,7 +661,7 @@
               }
 
               break;
-              case 2.4://初期戻し
+            case 2.4://初期戻し
               trainingTimer = new Date();
               trainingPattern = 0.0;
               imageNode = [];
@@ -614,6 +671,64 @@
                 correct = 0.1;
               }
               break;
+            case 4.0://初期設定
+              trainingPattern = 4.1;
+              trainingTimer = new Date();
+              if(trainingLR==1){
+                //imageNode.push({x:640,y:360});
+                imageNode.push({x:pL[POSE_LANDMARKS.RIGHT_KNEE].x*canvasElement.width,y:pL[POSE_LANDMARKS.RIGHT_KNEE].y*canvasElement.height});
+              }else{
+                //imageNode.push({x:640,y:360});
+                imageNode.push({x:pL[POSE_LANDMARKS.LEFT_KNEE].x*canvasElement.width,y:pL[POSE_LANDMARKS.LEFT_KNEE].y*canvasElement.height});
+              }
+              break;
+            case 4.1://足あげ
+              var now = new Date();
+              var rate = (now -trainingTimer)/4000;
+              if(rate<=1.0){
+                if(trainingLR==1){
+                  var raCanvas = getCanvasRoundAllow(-1*trainingLR,90,90+rate*90*1.4);
+                  canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[0].x-200,imageNode[0].y,200,200);
+                }else{
+                  var raCanvas = getCanvasRoundAllow(-1*trainingLR,90,90-rate*90*1.4);
+                  canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[0].x,imageNode[0].y,200,200);
+                }
+              }
+              break;
+            case 4.2://足さげ設定
+              trainingPattern = 4.3;
+              trainingTimer = new Date();
+              if(correct<1){
+                correct = -1;
+              }else{
+                correct = 0.1;
+              }
+              break;
+            case 4.3://足下げ
+              var now = new Date();
+              var rate = (now -trainingTimer)/4000;
+              if(rate<=1.0){
+                if(trainingLR==1){
+                  var raCanvas = getCanvasRoundAllow(trainingLR,90,90-rate*90*1.4);
+                  canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[0].x-200,imageNode[0].y,200,200);
+                }else{
+                  var raCanvas = getCanvasRoundAllow(trainingLR,90,90+rate*90*1.4);
+                  canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[0].x,imageNode[0].y,200,200);
+                }
+              }
+              break;
+            case 4.4://初期戻し
+              trainingTimer = new Date();
+              trainingPattern = 0.0;
+              imageNode = [];
+              if(correct<1){
+                correct = -1;
+              }else{
+                correct = 0.1;
+              }
+              trainingLR = trainingLR*-1;
+              break;
+
             default:
               break;
           }
