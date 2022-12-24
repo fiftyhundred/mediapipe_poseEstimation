@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+</head>
+
+<body>
+  <table width="600" border="1" class="hoge">
+    <tr>
+      <th colspan="9">膝の曲げ伸ばし</th>
+    </tr>
+    <tr height="50">
+      <td rowspan="3" width="200"><img src="image/training1.png" width="200"></td>
+      <td align="center">1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td>
+    </tr>
+    <tr height="50">
+      <td width="45"><img src="image/circle.png" height="45"></td>
+      <td width="45"><img src="image/circle.png" height="45"></td>
+      <td width="45"><img src="image/circle.png" height="45"></td>
+      <td width="45"><img src="image/circle.png" height="45"></td>
+      <td width="45"><img src="image/circle.png" height="45"></td>
+      <td width="45"><img src="image/circle.png" height="45"></td>
+      <td width="45"><img src="image/circle.png" height="45"></td>
+      <td width="45"><img src="image/circle.png" height="45"></td>
+    </tr>
+    <tr>
+      <td colspan="8">testet</td>
+    </tr>
+  </table>
+  <div class="adds"></div>
+</body>
+
+<script>
+  const trainingName={
+    1:"膝の曲げ伸ばし",
+    2:"腕の曲げ伸ばし",
+    3:"つま先立ちの運動",
+    4:"開脚の運動",
+  }
+  const Image = {
+    "upallow":document.createElement('img'),
+    "downallow":document.createElement('img'),
+    "circle":document.createElement('img'),
+    "cross":document.createElement('img'),
+    "roundallowRight":document.createElement('img'),
+    "roundallowLeft":document.createElement('img'),
+    "training1":document.createElement('img'),
+    "training2":document.createElement('img'),
+    "training3":document.createElement('img'),
+    "training4":document.createElement('img'),
+  };
+
+  Image["upallow"].src = 'image/upallow.png';
+  Image["downallow"].src = 'image/downallow.png';
+  Image["circle"].src = 'image/red.png';
+  Image["cross"].src = 'image/blue.png';
+  Image["roundallowRight"].src = 'image/roundallowRight.png';
+  Image["roundallowLeft"].src = 'image/roundallowLeft.png';
+  Image["training1"].src = 'image/training1.png';
+  Image["training2"].src = 'image/training2.png';
+  Image["training3"].src = 'image/training3.png';
+  Image["training4"].src = 'image/training4.png';
+
+  var correctList = [1,1,1,1,-1,1,1,1];
+
+  function addResultTable(Tpattern){
+    var newtable = document.createElement("table");
+    newtable.width = 600;
+    newtable.border = 1;
+
+    //tableの1行目
+    var tr1 = document.createElement("tr");
+    var th1 = document.createElement("th");
+    th1.colSpan = 9;
+    th1.innerHTML = trainingName[Tpattern];
+    tr1.appendChild(th1);
+    newtable.appendChild(tr1);
+
+    //tableの2行目
+    var tr2 = document.createElement("tr");
+    tr2.height = 50;
+    var td0 = document.createElement("td");
+    td0.rowSpan = 3;
+    td0.width = 200;
+    var trainingImg = Image["training"+String(Tpattern)];
+    trainingImg.width = 200;
+    td0.appendChild(trainingImg);
+    tr2.appendChild(td0);
+    for(let i=1;i<=8;i++){
+      var td = document.createElement("td");
+      td.align = "center";
+      td.innerHTML = i;
+      td.width = 45;
+      td.height = 45;
+      tr2.appendChild(td);
+    }
+    newtable.appendChild(tr2);
+
+    //tableの3行目
+    var tr3 = document.createElement("tr");
+
+    for(let i=0;i<8;i++){
+      var td = document.createElement("td");
+      td.align = "center";
+      td.width = 45;
+      td.height = 45;
+      var correctImg = document.createElement("img");
+      switch (Tpattern) {
+        case 1:
+
+          break;
+        case 2:
+
+          break;
+        case 3:
+
+          break;
+        case 4:
+
+          break;
+        default:
+
+      }
+
+      if(correctList[i]>=1){
+        correctImg.src = Image["circle"].src;
+      }else if(correctList[i]<=-1){
+        correctImg.src = Image["cross"].src;
+      }
+      correctImg.height = 45;
+      td.appendChild(correctImg);
+
+      tr3.appendChild(td);
+    }
+    tr3.height = 50;
+    newtable.appendChild(tr3);
+
+    //tableの4行目
+    var tr4 = document.createElement("tr");
+    var tdc = document.createElement("td");
+    tdc.colSpan = 8;
+    tdc.innerHTML = "comment";
+    tr4.appendChild(tdc);
+    newtable.appendChild(tr4);
+
+    return newtable;
+  }
+  var addsdiv = document.getElementsByClassName('adds')[0];
+  addsdiv.appendChild(addResultTable(4));
+  addsdiv.appendChild(addResultTable(3));
+  addsdiv.appendChild(addResultTable(2));
+
+</script>
+
+</html>
