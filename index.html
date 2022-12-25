@@ -50,6 +50,7 @@
     <div class="landmark-grid-container" hidden></div>
     <div id="angle"></div>
     <input type="text" id="Tpattern" required size="10" value = "1.0">
+    <input type="text" id="user" required size="10" value = "000">
     <button id="start">Start</button>
     <button id="fin">Fin</button>
     <button id="results">Results</button>
@@ -78,6 +79,7 @@
     });
 
     const inputbar = document.getElementById('Tpattern');
+    const userbar = document.getElementById('user');
     const startButton = document.getElementById('start');
     const resultsButton = document.getElementById('results');
 
@@ -85,10 +87,12 @@
     var trainingTimer = new Date();
     var writing = "";
     var oncedownload = true;
+    var countms = 1000;
     var cnt = 0;
     var trainingPattern = 0.0;
     var trainingLR = 0;
-    var frontLR = 1;
+    var frontLR = -1;
+    var trainingNow = 0;
     var imageNode = [];//画像の座標保管
     var correct = 0;
     var shoulderHighest = 0.0;
@@ -266,7 +270,7 @@
         }
         if(trainingPattern>=3.2 && trainingPattern<=3.6){
           var shoulderHeight = (results.poseLandmarks[POSE_LANDMARKS.RIGHT_SHOULDER].y+results.poseLandmarks[POSE_LANDMARKS.LEFT_SHOULDER].y)/2;
-          if(shoulderHighest<=shoulderHeight){
+          if(shoulderHighest>=shoulderHeight){
             shoulderHighest = shoulderHeight;
           }
         }
@@ -357,7 +361,7 @@
 
 
         //11/15
-        const cells = []
+        var cells = [];
         const items = 6;
         function cellMake() {
             //タイムスタンプと共に角度とどの信頼度をセルにする
@@ -369,6 +373,7 @@
                 4: "visibility(left)",
                 5: "visibility(right)",
             };
+            cells = [];
             console.log(cellTag)
             cells.push(cellTag);
 
@@ -388,14 +393,26 @@
 
                 return yy + mo + dd + hh + mi + ss + ms;
             }
+            var cell;
 
-            const cell = {
-                0: timeStamp(),
-                1: leftAngle.angle,
-                2: rightAngle.angle,
-                3: (leftAngle.angle + rightAngle.angle) / 2,
-                4: leftAngle.visibility,
-                5: rightAngle.visibility,
+            if(trainingNow==3){
+              cell = {
+                  0: timeStamp(),
+                  1: leftAngle.y,
+                  2: rightAngle.y,
+                  3: (leftAngle.y + rightAngle.y) / 2,
+                  4: leftAngle.visibility,
+                  5: rightAngle.visibility,
+              }
+            }else{
+              cell = {
+                  0: timeStamp(),
+                  1: leftAngle.angle,
+                  2: rightAngle.angle,
+                  3: (leftAngle.angle + rightAngle.angle) / 2,
+                  4: leftAngle.visibility,
+                  5: rightAngle.visibility,
+              }
             }
             cells.push(cell);
 
@@ -468,13 +485,16 @@
 
         //training設定
         function startTraining(pattern){
+          correctList = [];
+          trainingNow = pattern;
+          cellMake();
           switch (pattern) {
             case 1.0:
               var node = [-3,-1,2,3,4,1,2,3,1,2,3,1,2,3,4,11];//-1はループごとに増える、-2はnull、-3は右or左
               cnt = -1;
               trainingLR = 1;
-              var timer1 = setInterval(function(){playTrainingMusic(node,++cnt);playTrainingImage(node,cnt,pattern);},1000);
-              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;},(node.length*4)*1000+100);
+              var timer1 = setInterval(function(){playTrainingMusic(node,++cnt);playTrainingImage(node,cnt,pattern);},countms);
+              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;},(node.length*4)*countms+100);
               needVector = {
                   "rightKnee":[24,26,28],
                   "leftKnee":[23,25,27],
@@ -483,8 +503,8 @@
             case 2.0:
               var node = [-1,2,3,4,5,6,7,8,11,-2];
               cnt = -1;
-              var timer1 = setInterval(function(){playTrainingMusic(node,++cnt);playTrainingImage(node,cnt,pattern);},1000);
-              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;},(node.length*4-1)*1000+100);
+              var timer1 = setInterval(function(){playTrainingMusic(node,++cnt);playTrainingImage(node,cnt,pattern);},countms);
+              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;},(node.length*4-1)*countms+100);
               needVector = {
                   // "rightUde":[12,14,16],
                   // "leftUde":[11,13,15],
@@ -495,8 +515,8 @@
               case 3.0:
               var node = [-1,2,3,4,5,6,7,8,11,-2];
               cnt = -1;
-              var timer1 = setInterval(function(){playTrainingMusic(node,++cnt);playTrainingImage(node,cnt,pattern);},1000);
-              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;checksHList();},(node.length*4-1)*1000+100);
+              var timer1 = setInterval(function(){playTrainingMusic(node,++cnt);playTrainingImage(node,cnt,pattern);},countms);
+              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;checksHList();trainingNow=0;},(node.length*4-1)*countms+100);
               needVector = {
                   // "rightUde":[12,14,16],
                   // "leftUde":[11,13,15],
@@ -509,8 +529,8 @@
               var node = [-3,-1,2,3,4,5,6,7,8,11];
               cnt = -1;
               trainingLR = 1;
-              var timer1 = setInterval(function(){playTrainingMusic(node,++cnt);playTrainingImage(node,cnt,pattern);},1000);
-              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;},(node.length*4)*1000+100);
+              var timer1 = setInterval(function(){playTrainingMusic(node,++cnt);playTrainingImage(node,cnt,pattern);},countms);
+              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;},(node.length*4)*countms+100);
               needVector = {
                   // "rightUde":[12,14,16],
                   // "leftUde":[11,13,15],
@@ -664,7 +684,7 @@
               break;
             case 1.1://膝伸ばし
               var now = new Date();
-              var rate = (now -trainingTimer)/4000;
+              var rate = (now -trainingTimer)/(4*countms);
               if(rate<=1.0){
                 var raCanvas = getCanvasRoundAllow(frontLR,180*(frontLR+1)/2,180*1.3*rate*(-1)*frontLR+180*(frontLR+1)/2);
                 canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[0].x-50,imageNode[0].y-50,100,100);
@@ -688,7 +708,7 @@
               break;
             case 1.3://膝キープ
               var now = new Date();
-              var rate = (now -trainingTimer)/3000;
+              var rate = (now -trainingTimer)/(3*countms);
               if(rate<=1.0){
                 var raCanvas = getCanvasRoundAllow(frontLR,180*(frontLR+1)/2,180*1.3*rate*(-1)*frontLR+180*(frontLR+1)/2);
                 canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[1].x-40,imageNode[1].y-40,80,80);
@@ -705,7 +725,7 @@
               break;
             case 1.5://膝キープ2
               var now = new Date();
-              var rate = (now -trainingTimer)/3000;
+              var rate = (now -trainingTimer)/(3*countms);
               if(rate<=1.0){
                 var raCanvas = getCanvasRoundAllow(-1*frontLR,180*(-1*frontLR+1)/2,180*1.3*rate*frontLR+180*(-1*frontLR+1)/2);
                 canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[1].x-40,imageNode[1].y-40,80,80);
@@ -722,7 +742,7 @@
               break;
             case 1.7://膝曲げ
               var now = new Date();
-              var rate = (now -trainingTimer)/4000;
+              var rate = (now -trainingTimer)/(4*countms);
               if(rate<=1.0){
                 var raCanvas = getCanvasRoundAllow(-1*frontLR,180*(-1*frontLR+1)/2,180*1.3*rate*frontLR+180*(-1*frontLR+1)/2);
                 canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[0].x-40,imageNode[0].y-40,80,80);
@@ -756,7 +776,7 @@
               break;
             case 2.1://肘伸ばし
               var now = new Date();
-              var rate = (now -trainingTimer)/4000;
+              var rate = (now -trainingTimer)/(4*countms);
               if(rate<=1.0){
                 canvasCtx.drawImage(Image["upallow"],imageNode[0].x-25,imageNode[0].y-(imageNode[0].y-imageNode[2].y)*rate-25,50,(imageNode[0].y-imageNode[2].y)*rate);
                 canvasCtx.drawImage(Image["upallow"],imageNode[1].x-25,imageNode[1].y-(imageNode[1].y-imageNode[3].y)*rate-25,50,(imageNode[1].y-imageNode[3].y)*rate);
@@ -777,7 +797,7 @@
               break;
             case 2.3://肘曲げ
               var now = new Date();
-              var rate = (now -trainingTimer)/4000;
+              var rate = (now -trainingTimer)/(4*countms);
               if(rate<=1.0){
                 canvasCtx.drawImage(Image["downallow"],imageNode[4].x-25,imageNode[4].y-25,50,(imageNode[0].y-imageNode[4].y)*rate);
                 canvasCtx.drawImage(Image["downallow"],imageNode[5].x-25,imageNode[5].y-25,50,(imageNode[1].y-imageNode[5].y)*rate);
@@ -810,22 +830,24 @@
               break;
             case 3.1:
               var now = new Date();
-              var rate = (now -trainingTimer)/4000;
+              var rate = (now -trainingTimer)/(4*countms);
               if(rate<=1.0){
-                canvasCtx.drawImage(Image["upallow"],imageNode[0].x-25,imageNode[0].y+50*rate-25,50,50*rate);
-                canvasCtx.drawImage(Image["upallow"],imageNode[1].x-25,imageNode[1].y+50*rate-25,50,50*rate);
+                canvasCtx.drawImage(Image["upallow"],imageNode[0].x-25,imageNode[0].y-50*rate-25,50,50*rate);
+                canvasCtx.drawImage(Image["upallow"],imageNode[1].x-25,imageNode[1].y-50*rate-25,50,50*rate);
               }
               break;
             case 3.2:
               trainingPattern = 3.3;
-              shoulderHighest = 0.0;
+              shoulderHighest = 9999.0;
+              canvasCtx.drawImage(Image["upallow"],imageNode[0].x-25,imageNode[0].y-50*rate-25,50,50*rate);
+              canvasCtx.drawImage(Image["upallow"],imageNode[1].x-25,imageNode[1].y-50*rate-25,50,50*rate);
               break;
             case 3.3:
               var now = new Date();
-              var rate = (now -trainingTimer)/4000;
+              var rate = (now -trainingTimer)/(4*countms);
               if(rate<=1.0){
-                canvasCtx.drawImage(Image["upallow"],imageNode[0].x-25,imageNode[0].y+50*rate-25,50,50*rate);
-                canvasCtx.drawImage(Image["upallow"],imageNode[1].x-25,imageNode[1].y+50*rate-25,50,50*rate);
+                canvasCtx.drawImage(Image["upallow"],imageNode[0].x-25,imageNode[0].y-50*rate-25,50,50*rate);
+                canvasCtx.drawImage(Image["upallow"],imageNode[1].x-25,imageNode[1].y-50*rate-25,50,50*rate);
               }
               break;
             case 3.4:
@@ -836,22 +858,25 @@
               break;
             case 3.5:
               var now = new Date();
-              var rate = (now -trainingTimer)/4000;
+              var rate = (now -trainingTimer)/(4*countms);
               if(rate<=1.0){
                 canvasCtx.drawImage(Image["downallow"],imageNode[2].x-25,imageNode[2].y-25,50,50*rate);
-                canvasCtx.drawImage(Image["downallow"],imageNode[2].x-25,imageNode[2].y-25,50,50*rate);
+                canvasCtx.drawImage(Image["downallow"],imageNode[3].x-25,imageNode[3].y-25,50,50*rate);
               }
               break;
             case 3.6:
               trainingPattern = 3.7;
               sHList.push(Math.abs((imageNode[0].y+imageNode[1].y)/2-shoulderHighest*canvasElement.height));//shoulderHighestの記録
+              console.log(shoulderHighest);
+              canvasCtx.drawImage(Image["downallow"],imageNode[2].x-25,imageNode[2].y-25,50,50*rate);
+              canvasCtx.drawImage(Image["downallow"],imageNode[3].x-25,imageNode[3].y-25,50,50*rate);
               break;
             case 3.7:
               var now = new Date();
-              var rate = (now -trainingTimer)/4000;
+              var rate = (now -trainingTimer)/(4*countms);
               if(rate<=1.0){
                 canvasCtx.drawImage(Image["downallow"],imageNode[2].x-25,imageNode[2].y-25,50,50*rate);
-                canvasCtx.drawImage(Image["downallow"],imageNode[2].x-25,imageNode[2].y-25,50,50*rate);
+                canvasCtx.drawImage(Image["downallow"],imageNode[3].x-25,imageNode[3].y-25,50,50*rate);
               }
               break;
             case 3.8://初期戻し
@@ -873,7 +898,7 @@
               break;
             case 4.1://足あげ
               var now = new Date();
-              var rate = (now -trainingTimer)/4000;
+              var rate = (now -trainingTimer)/(4*countms);
               if(rate<=1.0){
                 if(trainingLR==1){
                   var raCanvas = getCanvasRoundAllow(-1*trainingLR,90,90+rate*90*1.4);
@@ -897,7 +922,7 @@
               break;
             case 4.3://足下げ
               var now = new Date();
-              var rate = (now -trainingTimer)/4000;
+              var rate = (now -trainingTimer)/(4*countms);
               if(rate<=1.0){
                 if(trainingLR==1){
                   var raCanvas = getCanvasRoundAllow(trainingLR,90,90-rate*90*1.4);
@@ -1011,9 +1036,27 @@
             calcTraining(results,resultAngle);
 
             resulttxt = resulttxt+"<br>"+JSON.stringify(correctList);
+            resulttxt = resulttxt+"<br>"+JSON.stringify(sHList);
 
             angleElement.innerHTML = resulttxt;//JSON.stringify(resultAngle);
-            //cellUpdate(resultAngle.leftElbow, resultAngle.rightElbow);
+
+            switch (trainingNow) {
+              case 1:
+                cellUpdate(resultAngle.leftKnee, resultAngle.rightKnee);
+                break;
+              case 2:
+                cellUpdate(resultAngle.leftElbow, resultAngle.rightElbow);
+                break;
+              case 3:
+                cellUpdate(resultAngle.leftShoulder, resultAngle.rightShoulder);
+                break;
+              case 4:
+                cellUpdate(resultAngle.leftHip, resultAngle.rightHip);
+                break;
+              default:
+                break;
+            }
+
         }
 
         grid.updateLandmarks(results.poseWorldLandmarks);
@@ -1064,7 +1107,7 @@
         height: 720
     });
     camera.start();
-    cellMake();
+
 </script>
 </body>
 </html>
