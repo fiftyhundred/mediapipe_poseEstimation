@@ -18,7 +18,7 @@
     <table>
       <tr>
           <td class="canvas_cell"><canvas class="output_canvas" width="1280px" height="720px"></canvas></td>
-          <td hidden><video class="model_video" muted crossorigin="anonymous" ></video></td><!-- src="0_2_.mp4"-->
+          <td class="video_cell"><video class="model_video" muted hidden crossorigin="anonymous" width="360px" height="640px" ></video></td><!-- src="0_2_.mp4"-->
           <td class="results_cell" hidden>
               <!--
               <table width="600" border="1">
@@ -51,6 +51,7 @@
     <div id="angle"></div>
     <input type="text" id="Tpattern" required size="10" value = "1.0">
     <input type="text" id="user" required size="10" value = "000">
+    <input type="text" id="front" required size="10" value = "1">
     <button id="start">Start</button>
     <button id="fin">Fin</button>
     <button id="results">Results</button>
@@ -62,6 +63,7 @@
     const modelElement = document.getElementsByClassName('model_video')[0];
     const canvasCtx = canvasElement.getContext("2d");
     const canvasCellElement = document.getElementsByClassName('canvas_cell')[0];
+    const videoCellElement = document.getElementsByClassName('video_cell')[0];
     const resultsCellElement = document.getElementsByClassName('results_cell')[0];
     const angleElement = document.getElementById("angle");
     const landmarkContainer = document.getElementsByClassName('landmark-grid-container')[0];
@@ -80,6 +82,7 @@
 
     const inputbar = document.getElementById('Tpattern');
     const userbar = document.getElementById('user');
+    const frontbar = document.getElementById('front');
     const startButton = document.getElementById('start');
     const resultsButton = document.getElementById('results');
 
@@ -91,13 +94,27 @@
     var cnt = 0;
     var trainingPattern = 0.0;
     var trainingLR = 0;
-    var frontLR = -1;
+    var frontLR = frontbar.value;
     var trainingNow = 0;
     var imageNode = [];//画像の座標保管
     var correct = 0;
     var shoulderHighest = 0.0;
     var sHList = [];//shoulderHighestList
     var correctList = [];
+    var correctResults = {
+      "1R":[],
+      "1L":[],
+      "1Comment":0,
+      "2R":[],
+      "2L":[],
+      "2Comment":0,
+      "3R":[],
+      "3L":[],
+      "3Comment":0,
+      "4R":[],
+      "4L":[],
+      "4Comment":0,
+    };
 
 
     const Image = {
@@ -105,6 +122,7 @@
       "downallow":document.createElement('img'),
       "circle":document.createElement('img'),
       "cross":document.createElement('img'),
+      "triangle":document.createElement('img'),
       "roundallowRight":document.createElement('img'),
       "roundallowLeft":document.createElement('img'),
       "training1":document.createElement('img'),
@@ -115,8 +133,9 @@
 
     Image["upallow"].src = 'image/upallow.png';
     Image["downallow"].src = 'image/downallow.png';
-    Image["circle"].src = 'image/red.png';
-    Image["cross"].src = 'image/blue.png';
+    Image["circle"].src = 'image/circle.png';
+    Image["cross"].src = 'image/cross.png';
+    Image["triangle"].src = 'image/triangle.png';
     Image["roundallowRight"].src = 'image/roundallowRight.png';
     Image["roundallowLeft"].src = 'image/roundallowLeft.png';
     Image["training1"].src = 'image/training1.png';
@@ -144,6 +163,11 @@
       canvasElement.height = canvasElement.width/16*9;
       modelElement.width = document.body.clientWidth/3;
       modelElement.height = modelElement.width/9*16;
+      if(canvasElement.height<modelElement.height){
+        modelElement.height = canvasElement.height;
+        modelElement.width = modelElement.height/16*9
+      }
+
     }
     canvasResize();
     window.onload = canvasResize;
@@ -154,6 +178,7 @@
         resultsButton.innerHTML="Video"
         resultsCellElement.hidden = false;
         canvasCellElement.hidden = true;
+        showResultTable();
       }else{
         resultsButton.innerHTML="Results"
         resultsCellElement.hidden = true;
@@ -162,11 +187,180 @@
     });
 
 
-    function addResultTable(){
+    function saveCorrectResults(pattern){
+      var muki = "";
+      if(frontLR==1){
+        muki = "R";
+      }else{
+        muki = "L";
+      }
+      var newList = [];
+      var commentInt = 0;
+      switch (pattern) {
+        case 1:
+          for (var i = 0; i < correctList.length/4; i++) {
+            var j = 1-frontLR;
+            if(correctList[4*i+j]<=-1){
+              commentInt = commentInt||1;
+              newList.push(-1);
+            }else if(correctList[4*i+j+1]<=-1){
+              commentInt = commentInt||2;
+              newList.push(-1);
+            }else{
+              newList.push(1);
+            }
+          }
+          break;
+        case 2:
+          for (var i = 0; i < correctList.length/2; i++) {
+            if(correctList[2*i]<=-1){
+              commentInt = commentInt||1;
+              newList.push(-1);
+            }else if(correctList[2*i+1]<=-1){
+              commentInt = commentInt||2;
+              newList.push(-1);
+            }else{
+              newList.push(1);
+            }
+          }
+          break;
+        case 3:
+          for (var i = 0; i < correctList.length; i++) {
+            newList.push(correctList[i]);
+            if(correctList[i]<=-1){
+              commentInt = commentInt||1;
+            }
+          }
+          break;
+        case 4:
+          for (var i = 0; i < correctList.length/4; i++) {
+            var j = 1-frontLR;
+            if(correctList[4*i+j]<=-1){
+              commentInt = commentInt||1;
+              newList.push(-1);
+            }else if(correctList[4*i+j+1]<=-1){
+              commentInt = commentInt||2;
+              newList.push(-1);
+            }else{
+              newList.push(1);
+            }
+          }
+          break;
+        default:
+          break;
+      }
+      correctResults[String(pattern)+muki] = newList;
+      correctResults[String(pattern)+"Comment"] = commentInt;
+
+      var cell;
+      cell = {
+          0: String(pattern)+muki,
+          1: JSON.stringify(newList),
+          2: commentInt,
+          3: "",
+          4: "",
+          5: "",
+      };
+      cells.push(cell);
+
+    }
+
+    function showResultTable(){
+      while(resultsCellElement.firstChild){
+        resultsCellElement.removeChild(resultsCellElement.firstChild);
+      }
+      for (var i = 1; i <= 4; i++) {
+        if(correctResults[String(i)+"R"].length>0 && correctResults[String(i)+"L"].length>0){
+          var cList = [];
+          for (var i = 0; i < correctResults[String(i)+"R"].length; i++) {
+            newList.push(correctResults[String(i)+"R"][i]+correctResults[String(i)+"L"][i]);
+          }
+          resultsCellElement.appendChild(makeResultTable(i,cList));
+        }
+      }
+    }
+
+    function makeResultTable(Tpattern,cList){
       var newtable = document.createElement("table");
       newtable.width = 600;
       newtable.border = 1;
 
+      //tableの1行目
+      var tr1 = document.createElement("tr");
+      var th1 = document.createElement("th");
+      th1.colSpan = 9;
+      th1.innerHTML = trainingName[Tpattern];
+      tr1.appendChild(th1);
+      newtable.appendChild(tr1);
+
+      //tableの2行目
+      var tr2 = document.createElement("tr");
+      tr2.height = 50;
+      var td0 = document.createElement("td");
+      td0.rowSpan = 3;
+      td0.width = 200;
+      var trainingImg = Image["training"+String(Tpattern)];
+      trainingImg.width = 200;
+      td0.appendChild(trainingImg);
+      tr2.appendChild(td0);
+      for(let i=1;i<=8;i++){
+        var td = document.createElement("td");
+        td.align = "center";
+        td.innerHTML = i;
+        td.width = 45;
+        td.height = 45;
+        tr2.appendChild(td);
+      }
+      newtable.appendChild(tr2);
+
+      //tableの3行目
+      var tr3 = document.createElement("tr");
+
+      for(let i=0;i<8;i++){
+        var td = document.createElement("td");
+        td.align = "center";
+        td.width = 45;
+        td.height = 45;
+        var correctImg = document.createElement("img");
+        switch (Tpattern) {
+          case 1:
+
+            break;
+          case 2:
+
+            break;
+          case 3:
+
+            break;
+          case 4:
+
+            break;
+          default:
+
+        }
+
+        if(cList[i]>=1){
+          correctImg.src = Image["circle"].src;
+        }else if(cList[i]<=-1){
+          correctImg.src = Image["cross"].src;
+        }
+        correctImg.height = 45;
+        td.appendChild(correctImg);
+
+        tr3.appendChild(td);
+      }
+      tr3.height = 50;
+      newtable.appendChild(tr3);
+
+      //tableの4行目
+      var tr4 = document.createElement("tr");
+      var tdc = document.createElement("td");
+      tdc.colSpan = 8;
+      tdc.innerHTML = "comment";
+      tr4.appendChild(tdc);
+      newtable.appendChild(tr4);
+
+      return newtable;
     }
 
 
@@ -488,35 +682,46 @@
           correctList = [];
           trainingNow = pattern;
           cellMake();
+          frontLR = frontbar.value;
           switch (pattern) {
             case 1.0:
-              var node = [-3,-1,2,3,4,1,2,3,1,2,3,1,2,3,4,11];//-1はループごとに増える、-2はnull、-3は右or左
+              var node = [-3,-4,2,3,4,1,2,3,1,2,3,1,2,3,4,11];//-1はループごとに増える、-2はnull、-3は右or左
               cnt = -1;
               trainingLR = 1;
-              var timer1 = setInterval(function(){playTrainingMusic(node,++cnt);playTrainingImage(node,cnt,pattern);},countms);
-              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;},(node.length*4)*countms+100);
+              var timer1 = setInterval(function(){playModelVideo(node,cnt);playTrainingMusic(node,++cnt);playTrainingImage(node,cnt,pattern);},countms);
+              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;modelElement.hidden = true;saveCorrectResults(1);},(node.length*16)*countms+100);
               needVector = {
                   "rightKnee":[24,26,28],
                   "leftKnee":[23,25,27],
               };
+              if(frontLR==1){
+                modelElement.src = "model_1R.mp4"
+              }else{
+                modelElement.src = "model_1L.mp4"
+              }
+              modelElement.hidden = false;
               break;
             case 2.0:
               var node = [-1,2,3,4,5,6,7,8,11,-2];
               cnt = -1;
-              var timer1 = setInterval(function(){playTrainingMusic(node,++cnt);playTrainingImage(node,cnt,pattern);},countms);
-              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;},(node.length*4-1)*countms+100);
+              var timer1 = setInterval(function(){playModelVideo(node,cnt);playTrainingMusic(node,++cnt);playTrainingImage(node,cnt,pattern);},countms);
+              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;modelElement.hidden = true;saveCorrectResults(2);},(node.length*8-1)*countms+100);
               needVector = {
                   // "rightUde":[12,14,16],
                   // "leftUde":[11,13,15],
                   "rightElbow":[12,14,16],
                   "leftElbow":[11,13,15],
               };
+              modelElement.src = "model_2.mp4"
+              modelElement.hidden = false;
+
+
               break;
               case 3.0:
               var node = [-1,2,3,4,5,6,7,8,11,-2];
               cnt = -1;
-              var timer1 = setInterval(function(){playTrainingMusic(node,++cnt);playTrainingImage(node,cnt,pattern);},countms);
-              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;checksHList();trainingNow=0;},(node.length*4-1)*countms+100);
+              var timer1 = setInterval(function(){playModelVideo(node,cnt);playTrainingMusic(node,++cnt);playTrainingImage(node,cnt,pattern);},countms);
+              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;checksHList();trainingNow=0;modelElement.hidden = true;saveCorrectResults(3);},(node.length*8-1)*countms+100);
               needVector = {
                   // "rightUde":[12,14,16],
                   // "leftUde":[11,13,15],
@@ -524,19 +729,27 @@
                   "leftShoulder":[13,11,23],
               };
               sHList = [];
+              modelElement.src = "model_3.mp4"
+              modelElement.hidden = false;
               break;
             case 4.0:
-              var node = [-3,-1,2,3,4,5,6,7,8,11];
+              var node = [-3,-4,2,3,4,5,6,7,8,11];
               cnt = -1;
               trainingLR = 1;
-              var timer1 = setInterval(function(){playTrainingMusic(node,++cnt);playTrainingImage(node,cnt,pattern);},countms);
-              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;},(node.length*4)*countms+100);
+              var timer1 = setInterval(function(){playModelVideo(node,cnt);playTrainingMusic(node,++cnt);playTrainingImage(node,cnt,pattern);},countms);
+              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;modelElement.hidden = true;saveCorrectResults(4);},(node.length*16)*countms+100);
               needVector = {
                   // "rightUde":[12,14,16],
                   // "leftUde":[11,13,15],
                   "rightHip":[23,24,28],
                   "leftHip":[24,23,27],
               };
+              if(frontLR==1){
+                modelElement.src = "model_4R.mp4"
+              }else{
+                modelElement.src = "model_4L.mp4"
+              }
+              modelElement.hidden = false;
               break;
             default:
               break;
@@ -555,6 +768,9 @@
           }else if(node[cnt%items]==-3){
             SE[Math.floor(cnt/items)%2+9].currentTime = 0;
             SE[Math.floor(cnt/items)%2+9].play();
+          }else if(node[cnt%items]==-4){
+            SE[Math.floor(cnt/items/2)+1].currentTime = 0;
+            SE[Math.floor(cnt/items/2)+1].play();
           }else{
             SE[node[cnt%items]].currentTime = 0;
             SE[node[cnt%items]].play();
@@ -563,16 +779,30 @@
 
         }
 
+        function playModelVideo(node,cnt){
+          var items = node.length;
+          if(node[cnt%items]==-1 ||((node[cnt%items]==-4)&&((Math.floor(cnt/items)%2)==0))){
+            modelElement.currentTime = 0;
+            modelElement.play();
+          }else if(node[cnt%items]==11){
+            if((trainingNow == 1||trainingNow == 4)&&((Math.floor(cnt/items)%2)==1)){
+              modelElement.pause();
+            }else if(trainingNow == 2 || trainingNow == 3){
+              modelElement.pause();
+            }
+          }
+        }
+
         //画像設定
         function playTrainingImage(node,cnt,pattern){
           var items = node.length;
-          if(node[cnt%items]==-1){
+          if(node[cnt%items]==-1 || node[cnt%items]==-4){
             trainingPattern = pattern;
           }
 
           switch (pattern) {
             case 1:
-              if(node[cnt%items]==-1){
+              if(node[cnt%items]==-4){
                 trainingPattern = 1.0;
               }else if(cnt%items==5){
                 trainingPattern = 1.2;
@@ -608,7 +838,7 @@
               break;
 
             case 4:
-              if(node[cnt%items]==-1){
+              if(node[cnt%items]==-4){
                 trainingPattern = 4.0;
               }else if(node[cnt%items]==5){
                 trainingPattern = 4.2;
@@ -667,11 +897,13 @@
         }
 
         function drawTrainingImage(pL){
+          /*
           if(correct>=1){
             canvasCtx.drawImage(Image["circle"],0,0,50,50);
           }else if(correct<0){
             canvasCtx.drawImage(Image["cross"],0,0,50,50);
           }
+          */
           switch (trainingPattern) {
             case 1.0://初期設定
               if(trainingLR==1){
@@ -997,7 +1229,10 @@
         canvasCtx.drawImage(
             results.image, 0, 0, canvasElement.width, canvasElement.height);
 
+
+
         canvasCtx.globalCompositeOperation = 'source-over';
+        /*
         drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS,
             {color: '#00FF00', lineWidth: 4});
         drawLandmarks(canvasCtx, Object.values(POSE_LANDMARKS_NEUTRAL)
@@ -1009,6 +1244,8 @@
         drawLandmarks(canvasCtx, Object.values(POSE_LANDMARKS_RIGHT)
                 .map(index => results.poseLandmarks[index]),
             {color: '#0000FF', lineWidth: 2});
+
+            */
 
         //ここで描写
         drawTrainingImage(results.poseLandmarks);
@@ -1038,7 +1275,7 @@
             resulttxt = resulttxt+"<br>"+JSON.stringify(correctList);
             resulttxt = resulttxt+"<br>"+JSON.stringify(sHList);
 
-            angleElement.innerHTML = resulttxt;//JSON.stringify(resultAngle);
+            //angleElement.innerHTML = resulttxt;//JSON.stringify(resultAngle);
 
             switch (trainingNow) {
               case 1:
