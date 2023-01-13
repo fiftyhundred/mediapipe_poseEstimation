@@ -156,6 +156,10 @@
       9:new Audio('SE/right.mp3'),
       10:new Audio('SE/left.mp3'),
       11:new Audio('SE/break.mp3'),
+      12:new Audio('SE/rightsit.mp3'),
+      13:new Audio('SE/leftsit.mp3'),
+      14:new Audio('SE/rightstand.mp3'),
+      15:new Audio('SE/leftstand.mp3'),
     };
 
     function canvasResize(){
@@ -385,6 +389,23 @@
       return vector1;
     }
 
+    //向きの計算
+    function bodyAngle(results){
+      var pL = results.poseWorldLandmarks;
+      var rh = POSE_LANDMARKS.RIGHT_SHOULDER;
+      var lh = POSE_LANDMARKS.LEFT_SHOULDER;
+      var vec = [pL[rh].x-pL[lh].x,pL[rh].y-pL[lh].y,pL[rh].z-pL[lh].z];
+      var vec_long = vec[0]**2+vec[1]**2+vec[2]**2;
+      var costh = -1*vec[0]/Math.sqrt(vec_long);
+      var sign;
+      if(pL[rh].z<=pL[lh].z){
+        sign = 1;
+      }else{
+        sign = -1;
+      }
+      return sign*Math.round(Math.acos(costh)*180/Math.PI*1000)/1000;
+    }
+
 
     //角度の計算
     function calcAngle(pose1,pose2,pose3){
@@ -425,7 +446,70 @@
                 'width': width,
                 'height': height,
             };
+    }
+
+    function calcsit(results){//5秒間斜めになってじっと座っているかどうか
+      var now = new Date();
+      var rate = (now - trainingTimer)/5000;
+      var bAngle = bodyAngle(results);
+      var knee;
+      var hip;
+      var ankle;
+      if(frontLR==1){
+        knee = results.poseWorldLandmarks[POSE_LANDMARKS.RIGHT_KNEE];
+        hip = results.poseWorldLandmarks[POSE_LANDMARKS.RIGHT_HIP];
+        ankle = results.poseWorldLandmarks[POSE_LANDMARKS.RIGHT_ANKLE];
+      }else{
+        knee = results.poseWorldLandmarks[POSE_LANDMARKS.LEFT_KNEE];
+        hip = results.poseWorldLandmarks[POSE_LANDMARKS.LEFT_HIP];
+        ankle = results.poseWorldLandmarks[POSE_LANDMARKS.LEFT_ANKLE];
       }
+      var kneeVector = calcAngle(hip,knee,ankle);
+      var kAngle = kneeVector.angle;
+      if(trainingNow ==5){
+        if(frontLR==1){
+          if((bAngle>=40 && bAngle<=70) && kAngle<=110){//if((bAngle>=40 && bAngle<=70)){
+            correct = 1;
+          }else{
+            correct = -1;
+          }
+        }else{
+          if((bAngle>=-70 && bAngle<=-40) && kAngle<=110){//if((bAngle>=40 && bAngle<=70) && kAngle<=110){
+            correct = 1;
+          }else{
+            correct = -1;
+          }
+        }
+      }else if(trainingNow==6){
+        if(frontLR==1){
+          if((bAngle>=40 && bAngle<=70) && kAngle>=140){//if((bAngle>=40 && bAngle<=70)){
+            correct = 1;
+          }else{
+            correct = -1;
+          }
+        }else{
+          if((bAngle>=-70 && bAngle<=-40) && kAngle>=140){//if((bAngle>=40 && bAngle<=70) && kAngle<=110){
+            correct = 1;
+          }else{
+            correct = -1;
+          }
+        }
+      }
+
+      if(correct==1){
+        if(rate>1){
+          //終了時処理
+          if(trainingNow==5){
+            startTraining(1.0);
+          }else if(trainingNow==6){
+            startTraining(4.0);
+          }
+        }
+      }else if(correct==-1){
+        trainingTimer = new Date();
+      }
+    }
+
 
       function calcKnee(hip,knee,ankle){
         var kh = makeVector(knee,hip);
@@ -652,7 +736,7 @@
             var formData = new FormData();
 
             formData.append("str", str);
-            formData.append("user", Object.fromEntries(new URLSearchParams(window.location.search)).user)
+            formData.append("user", Object.fromEntries(new URLSearchParams(window.location.search)).user);
 
             // (2)onreadystatechangeイベントで処理の状況変化を監視
             xmlHttpRequest.onreadystatechange = function () {
@@ -688,8 +772,8 @@
               var node = [-3,-4,2,3,4,1,2,3,1,2,3,1,2,3,4,11];//-1はループごとに増える、-2はnull、-3は右or左
               cnt = -1;
               trainingLR = 1;
-              var timer1 = setInterval(function(){playModelVideo(node,cnt);playTrainingMusic(node,++cnt);playTrainingImage(node,cnt,pattern);},countms);
-              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;modelElement.hidden = true;saveCorrectResults(1);},(node.length*16)*countms+100);
+              var timer1 = setInterval(function(){playModelVideo(node,++cnt);playTrainingMusic(node,cnt);playTrainingImage(node,cnt,pattern);},countms);
+              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;modelElement.hidden = true;saveCorrectResults(1);},(node.length*8)*countms+100);
               needVector = {
                   "rightKnee":[24,26,28],
                   "leftKnee":[23,25,27],
@@ -704,8 +788,8 @@
             case 2.0:
               var node = [-1,2,3,4,5,6,7,8,11,-2];
               cnt = -1;
-              var timer1 = setInterval(function(){playModelVideo(node,cnt);playTrainingMusic(node,++cnt);playTrainingImage(node,cnt,pattern);},countms);
-              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;modelElement.hidden = true;saveCorrectResults(2);},(node.length*8-1)*countms+100);
+              var timer1 = setInterval(function(){playModelVideo(node,++cnt);playTrainingMusic(node,cnt);playTrainingImage(node,cnt,pattern);},countms);
+              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;modelElement.hidden = true;saveCorrectResults(2);},(node.length*4-1)*countms+100);
               needVector = {
                   // "rightUde":[12,14,16],
                   // "leftUde":[11,13,15],
@@ -720,8 +804,8 @@
               case 3.0:
               var node = [-1,2,3,4,5,6,7,8,11,-2];
               cnt = -1;
-              var timer1 = setInterval(function(){playModelVideo(node,cnt);playTrainingMusic(node,++cnt);playTrainingImage(node,cnt,pattern);},countms);
-              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;checksHList();trainingNow=0;modelElement.hidden = true;saveCorrectResults(3);},(node.length*8-1)*countms+100);
+              var timer1 = setInterval(function(){playModelVideo(node,++cnt);playTrainingMusic(node,cnt);playTrainingImage(node,cnt,pattern);},countms);
+              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;checksHList();trainingNow=0;modelElement.hidden = true;saveCorrectResults(3);},(node.length*4-1)*countms+100);
               needVector = {
                   // "rightUde":[12,14,16],
                   // "leftUde":[11,13,15],
@@ -736,8 +820,8 @@
               var node = [-3,-4,2,3,4,5,6,7,8,11];
               cnt = -1;
               trainingLR = 1;
-              var timer1 = setInterval(function(){playModelVideo(node,cnt);playTrainingMusic(node,++cnt);playTrainingImage(node,cnt,pattern);},countms);
-              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;modelElement.hidden = true;saveCorrectResults(4);},(node.length*16)*countms+100);
+              var timer1 = setInterval(function(){playModelVideo(node,++cnt);playTrainingMusic(node,cnt);playTrainingImage(node,cnt,pattern);},countms);
+              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;modelElement.hidden = true;saveCorrectResults(4);},(node.length*8)*countms+100);
               needVector = {
                   // "rightUde":[12,14,16],
                   // "leftUde":[11,13,15],
@@ -751,12 +835,32 @@
               }
               modelElement.hidden = false;
               break;
+            case 5.0:
+              if(frontLR==1){
+                SE[13].currentTime = 0;
+                SE[13].play();
+              }else{
+                SE[12].currentTime = 0;
+                SE[12].play();
+              }
+
+              break;
+            case 6.0:
+              if(frontLR==1){
+                SE[15].currentTime = 0;
+                SE[15].play();
+              }else{
+                SE[14].currentTime = 0;
+                SE[14].play();
+              }
+
+              break;
             default:
               break;
           }
         }
 
-        //音声再生
+        //運動の音声再生
         function playTrainingMusic(node,cnt){
           var items = node.length;
           if (node[cnt%items]==-1){
@@ -1232,7 +1336,8 @@
 
 
         canvasCtx.globalCompositeOperation = 'source-over';
-        /*
+/*
+        //座標描画
         drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS,
             {color: '#00FF00', lineWidth: 4});
         drawLandmarks(canvasCtx, Object.values(POSE_LANDMARKS_NEUTRAL)
@@ -1243,12 +1348,12 @@
             {color: '#FF0000', lineWidth: 2});
         drawLandmarks(canvasCtx, Object.values(POSE_LANDMARKS_RIGHT)
                 .map(index => results.poseLandmarks[index]),
-            {color: '#0000FF', lineWidth: 2});
+            {color: '#0000FF', lineWidth: 2});*
+*/
 
-            */
 
         //ここで描写
-        drawTrainingImage(results.poseLandmarks);
+        //drawTrainingImage(results.poseLandmarks);
 
         canvasCtx.restore();
 
@@ -1270,12 +1375,13 @@
                 resulttxt = resulttxt+ "," + String(key) + "," + String(resultAngle[key].angle) + "," + String(resultAngle[key].visibility);
             }
             //console.log(resultAngle);
+            var resulttxt = resulttxt+"<br>"+bodyAngle(results);
             calcTraining(results,resultAngle);
 
-            resulttxt = resulttxt+"<br>"+JSON.stringify(correctList);
-            resulttxt = resulttxt+"<br>"+JSON.stringify(sHList);
+            //resulttxt = resulttxt+"<br>"+JSON.stringify(correctList);
+            //resulttxt = resulttxt+"<br>"+JSON.stringify(sHList);
 
-            //angleElement.innerHTML = resulttxt;//JSON.stringify(resultAngle);
+            angleElement.innerHTML = resulttxt;//JSON.stringify(resultAngle);
 
             switch (trainingNow) {
               case 1:
@@ -1290,6 +1396,10 @@
               case 4:
                 cellUpdate(resultAngle.leftHip, resultAngle.rightHip);
                 break;
+              case 5:
+                calcsit(results);
+              case 6:
+                calcsit(results);
               default:
                 break;
             }
