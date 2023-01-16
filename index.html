@@ -517,6 +517,8 @@
           }else if(trainingNow==6){
             setTimeout(startTraining,3000,4.0);
           }
+          trainingNow = 0;
+          rate = 0;
         }
       }else if(correct==-1){
         trainingTimer = new Date();
