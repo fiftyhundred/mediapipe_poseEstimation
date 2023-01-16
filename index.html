@@ -1029,13 +1029,13 @@
         }
 
         function drawTrainingImage(pL){
-          /*
+          
           if(correct>=1){
             canvasCtx.drawImage(Image["circle"],0,0,50,50);
           }else if(correct<0){
             canvasCtx.drawImage(Image["cross"],0,0,50,50);
           }
-          */
+
           switch (trainingPattern) {
             case 1.0://初期設定
               if(trainingLR==1){
@@ -1051,7 +1051,7 @@
               var rate = (now -trainingTimer)/(4*countms);
               if(rate<=1.0){
                 var raCanvas = getCanvasRoundAllow(frontLR,180*(frontLR+1)/2,180*1.3*rate*(-1)*frontLR+180*(frontLR+1)/2);
-                canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[0].x-50,imageNode[0].y-50,100,100);
+                //canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[0].x-50,imageNode[0].y-50,100,100);
               }
               break;
             case 1.2://膝キープ設定
@@ -1075,7 +1075,7 @@
               var rate = (now -trainingTimer)/(3*countms);
               if(rate<=1.0){
                 var raCanvas = getCanvasRoundAllow(frontLR,180*(frontLR+1)/2,180*1.3*rate*(-1)*frontLR+180*(frontLR+1)/2);
-                canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[1].x-40,imageNode[1].y-40,80,80);
+                //canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[1].x-40,imageNode[1].y-40,80,80);
               }
               break;
             case 1.4://膝キープ設定2
@@ -1092,7 +1092,7 @@
               var rate = (now -trainingTimer)/(3*countms);
               if(rate<=1.0){
                 var raCanvas = getCanvasRoundAllow(-1*frontLR,180*(-1*frontLR+1)/2,180*1.3*rate*frontLR+180*(-1*frontLR+1)/2);
-                canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[1].x-40,imageNode[1].y-40,80,80);
+                //canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[1].x-40,imageNode[1].y-40,80,80);
               }
               break;
             case 1.6://膝曲げ設定
@@ -1109,7 +1109,7 @@
               var rate = (now -trainingTimer)/(4*countms);
               if(rate<=1.0){
                 var raCanvas = getCanvasRoundAllow(-1*frontLR,180*(-1*frontLR+1)/2,180*1.3*rate*frontLR+180*(-1*frontLR+1)/2);
-                canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[0].x-40,imageNode[0].y-40,80,80);
+                //canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[0].x-40,imageNode[0].y-40,80,80);
               }
 
               break;
@@ -1266,10 +1266,10 @@
               if(rate<=1.0){
                 if(trainingLR==1){
                   var raCanvas = getCanvasRoundAllow(-1*trainingLR,90,90+rate*90*1.4);
-                  canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[0].x-200,imageNode[0].y,200,200);
+                  //canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[0].x-200,imageNode[0].y,200,200);
                 }else{
                   var raCanvas = getCanvasRoundAllow(-1*trainingLR,90,90-rate*90*1.4);
-                  canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[0].x,imageNode[0].y,200,200);
+                  //canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[0].x,imageNode[0].y,200,200);
                 }
               }
               break;
@@ -1290,10 +1290,10 @@
               if(rate<=1.0){
                 if(trainingLR==1){
                   var raCanvas = getCanvasRoundAllow(trainingLR,90,90-rate*90*1.4);
-                  canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[0].x-200,imageNode[0].y,200,200);
+                  //canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[0].x-200,imageNode[0].y,200,200);
                 }else{
                   var raCanvas = getCanvasRoundAllow(trainingLR,90,90+rate*90*1.4);
-                  canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[0].x,imageNode[0].y,200,200);
+                  //canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[0].x,imageNode[0].y,200,200);
                 }
               }
               break;
@@ -1381,7 +1381,7 @@
 
 
         //ここで描写
-        //drawTrainingImage(results.poseLandmarks);
+        drawTrainingImage(results.poseLandmarks);
 
         canvasCtx.restore();
 
