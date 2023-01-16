@@ -271,6 +271,7 @@
           3: "",
           4: "",
           5: "",
+          6: "",
       };
       cells.push(cell);
 
@@ -1029,7 +1030,7 @@
         }
 
         function drawTrainingImage(pL){
-          
+
           if(correct>=1){
             canvasCtx.drawImage(Image["circle"],0,0,50,50);
           }else if(correct<0){
@@ -1400,7 +1401,7 @@
 
             for (let key in needVector){
                 resultAngle[key] = calcAngle(results.poseWorldLandmarks[needVector[key][0]],results.poseWorldLandmarks[needVector[key][1]],results.poseWorldLandmarks[needVector[key][2]]);
-                resulttxt = resulttxt+ "," + String(key) + "," + String(resultAngle[key].angle) + "," + String(resultAngle[key].visibility);
+                //resulttxt = resulttxt+ "," + String(key) + "," + String(resultAngle[key].angle) + "," + String(resultAngle[key].visibility);
             }
             //console.log(resultAngle);
             var resulttxt = resulttxt+"<br>"+bodyAngle(results);
