@@ -19,6 +19,7 @@
       <tr>
           <td class="canvas_cell"><canvas class="output_canvas" width="1280px" height="720px"></canvas></td>
           <td class="video_cell"><video class="model_video" muted hidden crossorigin="anonymous" width="360px" height="640px" ></video></td><!-- src="0_2_.mp4"-->
+          <td class="image_cell" hidden><img class="model_image" src="image/leftchest.png" crossorigin="anonymous" width="360px" height="640px"></td>
           <td class="results_cell" hidden>
               <!--
               <table width="600" border="1">
@@ -61,10 +62,12 @@
     const videoElement = document.getElementsByClassName('input_video')[0];
     const canvasElement = document.getElementsByClassName('output_canvas')[0];
     const modelElement = document.getElementsByClassName('model_video')[0];
+    const imageElement = document.getElementsByClassName('model_image')[0];
     const canvasCtx = canvasElement.getContext("2d");
     const canvasCellElement = document.getElementsByClassName('canvas_cell')[0];
     const videoCellElement = document.getElementsByClassName('video_cell')[0];
     const resultsCellElement = document.getElementsByClassName('results_cell')[0];
+    const imageCellElement = document.getElementsByClassName('image_cell')[0];
     const angleElement = document.getElementById("angle");
     const landmarkContainer = document.getElementsByClassName('landmark-grid-container')[0];
     const grid = new LandmarkGrid(landmarkContainer,{
@@ -129,6 +132,8 @@
       "training2":document.createElement('img'),
       "training3":document.createElement('img'),
       "training4":document.createElement('img'),
+      "leftchest":document.createElement('img'),
+      "rightchest":document.createElement('img'),
     };
 
     Image["upallow"].src = 'image/upallow.png';
@@ -142,6 +147,8 @@
     Image["training2"].src = 'image/training2.png';
     Image["training3"].src = 'image/training3.png';
     Image["training4"].src = 'image/training4.png';
+    Image["leftchest"].src = 'image/leftchest.png';
+    Image["rightchest"].src = 'image/rightchest.png';
 
     const SE = {
       0:new Audio('SE/start.mp3'),
@@ -499,10 +506,16 @@
       if(correct==1){
         if(rate>1){
           //終了時処理
+          SE[0].currentTime = 0;
+          SE[0].play();
+          startButton.disabled = true;
+          correct = 0;
+          imageElement.hidden = true;
+          imageCellElement.hidden = true;
           if(trainingNow==5){
-            startTraining(1.0);
+            setTimeout(startTraining,3000,1.0);
           }else if(trainingNow==6){
-            startTraining(4.0);
+            setTimeout(startTraining,3000,4.0);
           }
         }
       }else if(correct==-1){
@@ -640,16 +653,17 @@
 
         //11/15
         var cells = [];
-        const items = 6;
+        const items = 7;
         function cellMake() {
             //タイムスタンプと共に角度とどの信頼度をセルにする
             const cellTag = {
-                0: "時刻（日本）",
+                0: "time(JST)",
                 1: "left",
                 2: "right",
                 3: "Average",
                 4: "visibility(left)",
                 5: "visibility(right)",
+                6: "bodyAngle"
             };
             cells = [];
             console.log(cellTag)
@@ -657,7 +671,7 @@
 
         }
 
-        function cellUpdate(leftAngle, rightAngle) {
+        function cellUpdate(leftAngle, rightAngle, bAngle) {
             //cellMakeにデータをぶち込む
             const timeStamp = () => {
                 const today = new Date();
@@ -681,6 +695,7 @@
                   3: (leftAngle.y + rightAngle.y) / 2,
                   4: leftAngle.visibility,
                   5: rightAngle.visibility,
+                  6: bAngle,
               }
             }else{
               cell = {
@@ -690,6 +705,7 @@
                   3: (leftAngle.angle + rightAngle.angle) / 2,
                   4: leftAngle.visibility,
                   5: rightAngle.visibility,
+                  6: bAngle,
               }
             }
             cells.push(cell);
@@ -773,7 +789,7 @@
               cnt = -1;
               trainingLR = 1;
               var timer1 = setInterval(function(){playModelVideo(node,++cnt);playTrainingMusic(node,cnt);playTrainingImage(node,cnt,pattern);},countms);
-              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;modelElement.hidden = true;saveCorrectResults(1);},(node.length*8)*countms+100);
+              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(1);},(node.length*8)*countms+100);
               needVector = {
                   "rightKnee":[24,26,28],
                   "leftKnee":[23,25,27],
@@ -784,12 +800,13 @@
                 modelElement.src = "model_1L.mp4"
               }
               modelElement.hidden = false;
+              videoCellElement.hidden = false;
               break;
             case 2.0:
               var node = [-1,2,3,4,5,6,7,8,11,-2];
               cnt = -1;
               var timer1 = setInterval(function(){playModelVideo(node,++cnt);playTrainingMusic(node,cnt);playTrainingImage(node,cnt,pattern);},countms);
-              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;modelElement.hidden = true;saveCorrectResults(2);},(node.length*4-1)*countms+100);
+              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(2);},(node.length*4-1)*countms+100);
               needVector = {
                   // "rightUde":[12,14,16],
                   // "leftUde":[11,13,15],
@@ -798,14 +815,14 @@
               };
               modelElement.src = "model_2.mp4"
               modelElement.hidden = false;
-
+              videoCellElement.hidden = false;
 
               break;
               case 3.0:
               var node = [-1,2,3,4,5,6,7,8,11,-2];
               cnt = -1;
               var timer1 = setInterval(function(){playModelVideo(node,++cnt);playTrainingMusic(node,cnt);playTrainingImage(node,cnt,pattern);},countms);
-              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;checksHList();trainingNow=0;modelElement.hidden = true;saveCorrectResults(3);},(node.length*4-1)*countms+100);
+              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;checksHList();trainingNow=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(3);},(node.length*4-1)*countms+100);
               needVector = {
                   // "rightUde":[12,14,16],
                   // "leftUde":[11,13,15],
@@ -815,13 +832,14 @@
               sHList = [];
               modelElement.src = "model_3.mp4"
               modelElement.hidden = false;
+              videoCellElement.hidden = false;
               break;
             case 4.0:
               var node = [-3,-4,2,3,4,5,6,7,8,11];
               cnt = -1;
               trainingLR = 1;
               var timer1 = setInterval(function(){playModelVideo(node,++cnt);playTrainingMusic(node,cnt);playTrainingImage(node,cnt,pattern);},countms);
-              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;modelElement.hidden = true;saveCorrectResults(4);},(node.length*8)*countms+100);
+              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(4);},(node.length*8)*countms+100);
               needVector = {
                   // "rightUde":[12,14,16],
                   // "leftUde":[11,13,15],
@@ -834,26 +852,34 @@
                 modelElement.src = "model_4L.mp4"
               }
               modelElement.hidden = false;
+              videoCellElement.hidden = false;
               break;
             case 5.0:
               if(frontLR==1){
                 SE[13].currentTime = 0;
                 SE[13].play();
+                imageElement.src = Image["leftchest"].src;
               }else{
                 SE[12].currentTime = 0;
                 SE[12].play();
+                imageElement.src = Image["rightchest"].src;
               }
+              imageElement.hidden = false;
+              imageCellElement.hidden = false;
 
               break;
             case 6.0:
               if(frontLR==1){
                 SE[15].currentTime = 0;
                 SE[15].play();
+                imageElement.src = Image["leftchest"];
               }else{
                 SE[14].currentTime = 0;
                 SE[14].play();
+                imageElement.src = Image["rightchest"];
               }
-
+              imageElement.hidden = false;
+              imageCellElement.hidden = false;
               break;
             default:
               break;
@@ -1385,16 +1411,16 @@
 
             switch (trainingNow) {
               case 1:
-                cellUpdate(resultAngle.leftKnee, resultAngle.rightKnee);
+                cellUpdate(resultAngle.leftKnee, resultAngle.rightKnee,bodyAngle(results));
                 break;
               case 2:
-                cellUpdate(resultAngle.leftElbow, resultAngle.rightElbow);
+                cellUpdate(resultAngle.leftElbow, resultAngle.rightElbow,bodyAngle(results));
                 break;
               case 3:
-                cellUpdate(resultAngle.leftShoulder, resultAngle.rightShoulder);
+                cellUpdate(resultAngle.leftShoulder, resultAngle.rightShoulder,bodyAngle(results));
                 break;
               case 4:
-                cellUpdate(resultAngle.leftHip, resultAngle.rightHip);
+                cellUpdate(resultAngle.leftHip, resultAngle.rightHip,bodyAngle(results));
                 break;
               case 5:
                 calcsit(results);
