@@ -174,9 +174,13 @@
       canvasElement.height = canvasElement.width/16*9;
       modelElement.width = document.body.clientWidth/3;
       modelElement.height = modelElement.width/9*16;
+      imageElement.width = document.body.clientWidth/3;
+      imageElement.height = modelElement.width/9*16;
       if(canvasElement.height<modelElement.height){
         modelElement.height = canvasElement.height;
-        modelElement.width = modelElement.height/16*9
+        modelElement.width = modelElement.height/16*9;
+        imageElement.height = canvasElement.height;
+        imageElement.width = imageElement.height/16*9;
       }
 
     }
@@ -272,6 +276,7 @@
           4: "",
           5: "",
           6: "",
+          7: "",
       };
       cells.push(cell);
 
@@ -507,7 +512,7 @@
       if(correct==1){
         if(rate>1){
           //終了時処理
-          SE[0].currentTime = 0;
+          /*SE[0].currentTime = 0;
           SE[0].play();
           startButton.disabled = true;
           correct = 0;
@@ -517,7 +522,11 @@
             setTimeout(startTraining,3000,1.0);
           }else if(trainingNow==6){
             setTimeout(startTraining,3000,4.0);
-          }
+          }*/
+          startButton.disabled = false;
+          correct = 0;
+          imageElement.hidden = true;
+          imageCellElement.hidden = true;
           trainingNow = 0;
           rate = 0;
         }
@@ -666,7 +675,8 @@
                 3: "Average",
                 4: "visibility(left)",
                 5: "visibility(right)",
-                6: "bodyAngle"
+                6: "bodyAngle",
+                7: "trainingPattern",
             };
             cells = [];
             console.log(cellTag)
@@ -699,6 +709,7 @@
                   4: leftAngle.visibility,
                   5: rightAngle.visibility,
                   6: bAngle,
+                  7: trainingPattern,
               }
             }else{
               cell = {
@@ -709,6 +720,7 @@
                   4: leftAngle.visibility,
                   5: rightAngle.visibility,
                   6: bAngle,
+                  7: trainingPattern,
               }
             }
             cells.push(cell);
@@ -1143,8 +1155,8 @@
               var now = new Date();
               var rate = (now -trainingTimer)/(4*countms);
               if(rate<=1.0){
-                canvasCtx.drawImage(Image["upallow"],imageNode[0].x-25,imageNode[0].y-(imageNode[0].y-imageNode[2].y)*rate-25,50,(imageNode[0].y-imageNode[2].y)*rate);
-                canvasCtx.drawImage(Image["upallow"],imageNode[1].x-25,imageNode[1].y-(imageNode[1].y-imageNode[3].y)*rate-25,50,(imageNode[1].y-imageNode[3].y)*rate);
+                //canvasCtx.drawImage(Image["upallow"],imageNode[0].x-25,imageNode[0].y-(imageNode[0].y-imageNode[2].y)*rate-25,50,(imageNode[0].y-imageNode[2].y)*rate);
+                //canvasCtx.drawImage(Image["upallow"],imageNode[1].x-25,imageNode[1].y-(imageNode[1].y-imageNode[3].y)*rate-25,50,(imageNode[1].y-imageNode[3].y)*rate);
               }
               break;
             case 2.2://肘曲げ設定
@@ -1164,8 +1176,8 @@
               var now = new Date();
               var rate = (now -trainingTimer)/(4*countms);
               if(rate<=1.0){
-                canvasCtx.drawImage(Image["downallow"],imageNode[4].x-25,imageNode[4].y-25,50,(imageNode[0].y-imageNode[4].y)*rate);
-                canvasCtx.drawImage(Image["downallow"],imageNode[5].x-25,imageNode[5].y-25,50,(imageNode[1].y-imageNode[5].y)*rate);
+                //canvasCtx.drawImage(Image["downallow"],imageNode[4].x-25,imageNode[4].y-25,50,(imageNode[0].y-imageNode[4].y)*rate);
+                //canvasCtx.drawImage(Image["downallow"],imageNode[5].x-25,imageNode[5].y-25,50,(imageNode[1].y-imageNode[5].y)*rate);
               }else{
                 /*rate = 1.0;
                 canvasCtx.drawImage(Image["upallow"],imageNode[2].x+25,imageNode[0].y-(imageNode[2].y-imageNode[0].y)*rate+25,50,(imageNode[2].y-imageNode[0].y)*rate);
@@ -1197,22 +1209,22 @@
               var now = new Date();
               var rate = (now -trainingTimer)/(4*countms);
               if(rate<=1.0){
-                canvasCtx.drawImage(Image["upallow"],imageNode[0].x-25,imageNode[0].y-50*rate-25,50,50*rate);
-                canvasCtx.drawImage(Image["upallow"],imageNode[1].x-25,imageNode[1].y-50*rate-25,50,50*rate);
+                //canvasCtx.drawImage(Image["upallow"],imageNode[0].x-25,imageNode[0].y-50*rate-25,50,50*rate);
+                //canvasCtx.drawImage(Image["upallow"],imageNode[1].x-25,imageNode[1].y-50*rate-25,50,50*rate);
               }
               break;
             case 3.2:
               trainingPattern = 3.3;
               shoulderHighest = 9999.0;
-              canvasCtx.drawImage(Image["upallow"],imageNode[0].x-25,imageNode[0].y-50*rate-25,50,50*rate);
-              canvasCtx.drawImage(Image["upallow"],imageNode[1].x-25,imageNode[1].y-50*rate-25,50,50*rate);
+              //canvasCtx.drawImage(Image["upallow"],imageNode[0].x-25,imageNode[0].y-50*rate-25,50,50*rate);
+              //canvasCtx.drawImage(Image["upallow"],imageNode[1].x-25,imageNode[1].y-50*rate-25,50,50*rate);
               break;
             case 3.3:
               var now = new Date();
               var rate = (now -trainingTimer)/(4*countms);
               if(rate<=1.0){
-                canvasCtx.drawImage(Image["upallow"],imageNode[0].x-25,imageNode[0].y-50*rate-25,50,50*rate);
-                canvasCtx.drawImage(Image["upallow"],imageNode[1].x-25,imageNode[1].y-50*rate-25,50,50*rate);
+                //canvasCtx.drawImage(Image["upallow"],imageNode[0].x-25,imageNode[0].y-50*rate-25,50,50*rate);
+                //canvasCtx.drawImage(Image["upallow"],imageNode[1].x-25,imageNode[1].y-50*rate-25,50,50*rate);
               }
               break;
             case 3.4:
@@ -1225,23 +1237,23 @@
               var now = new Date();
               var rate = (now -trainingTimer)/(4*countms);
               if(rate<=1.0){
-                canvasCtx.drawImage(Image["downallow"],imageNode[2].x-25,imageNode[2].y-25,50,50*rate);
-                canvasCtx.drawImage(Image["downallow"],imageNode[3].x-25,imageNode[3].y-25,50,50*rate);
+                //canvasCtx.drawImage(Image["downallow"],imageNode[2].x-25,imageNode[2].y-25,50,50*rate);
+                //canvasCtx.drawImage(Image["downallow"],imageNode[3].x-25,imageNode[3].y-25,50,50*rate);
               }
               break;
             case 3.6:
               trainingPattern = 3.7;
               sHList.push(Math.abs((imageNode[0].y+imageNode[1].y)/2-shoulderHighest*canvasElement.height));//shoulderHighestの記録
               console.log(shoulderHighest);
-              canvasCtx.drawImage(Image["downallow"],imageNode[2].x-25,imageNode[2].y-25,50,50*rate);
-              canvasCtx.drawImage(Image["downallow"],imageNode[3].x-25,imageNode[3].y-25,50,50*rate);
+              //canvasCtx.drawImage(Image["downallow"],imageNode[2].x-25,imageNode[2].y-25,50,50*rate);
+              //canvasCtx.drawImage(Image["downallow"],imageNode[3].x-25,imageNode[3].y-25,50,50*rate);
               break;
             case 3.7:
               var now = new Date();
               var rate = (now -trainingTimer)/(4*countms);
               if(rate<=1.0){
-                canvasCtx.drawImage(Image["downallow"],imageNode[2].x-25,imageNode[2].y-25,50,50*rate);
-                canvasCtx.drawImage(Image["downallow"],imageNode[3].x-25,imageNode[3].y-25,50,50*rate);
+                //canvasCtx.drawImage(Image["downallow"],imageNode[2].x-25,imageNode[2].y-25,50,50*rate);
+                //canvasCtx.drawImage(Image["downallow"],imageNode[3].x-25,imageNode[3].y-25,50,50*rate);
               }
               break;
             case 3.8://初期戻し
@@ -1391,7 +1403,7 @@
             var now = new Date();
             var sec = (now.getTime() - starttime.getTime())/1000;
 
-            var resulttxt=String(trainingPattern)+","+String(sec);
+            var resulttxt="<h1>体の角度:"+bodyAngle(results)+"°</h1>";//String(trainingPattern)+","+String(sec);
 
             /*resulttxt = resulttxt+ ",rightShoulder," + String(results.poseWorldLandmarks[12].x) + ","+String(results.poseWorldLandmarks[12].y);
             resulttxt = resulttxt+ ",leftShoulder," + String(results.poseWorldLandmarks[11].x) + ","+String(results.poseWorldLandmarks[11].y);
@@ -1404,14 +1416,14 @@
                 //resulttxt = resulttxt+ "," + String(key) + "," + String(resultAngle[key].angle) + "," + String(resultAngle[key].visibility);
             }
             //console.log(resultAngle);
-            var resulttxt = resulttxt+"<br>"+bodyAngle(results);
+            //resulttxt = resulttxt+"<h2>"+bodyAngle(results)+"</h2>";
             calcTraining(results,resultAngle);
 
             //resulttxt = resulttxt+"<br>"+JSON.stringify(correctList);
             //resulttxt = resulttxt+"<br>"+JSON.stringify(sHList);
-
-            angleElement.innerHTML = resulttxt;//JSON.stringify(resultAngle);
-
+            if(trainingNow==5||trainingNow==6){
+              angleElement.innerHTML = resulttxt;//JSON.stringify(resultAngle);
+            }
             switch (trainingNow) {
               case 1:
                 cellUpdate(resultAngle.leftKnee, resultAngle.rightKnee,bodyAngle(results));
