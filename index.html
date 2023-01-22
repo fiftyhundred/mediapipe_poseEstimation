@@ -167,6 +167,7 @@
       13:new Audio('SE/leftsit.mp3'),
       14:new Audio('SE/rightstand.mp3'),
       15:new Audio('SE/leftstand.mp3'),
+      16:new Audio('SE/anglecomplete.mp3'),
     };
 
     function canvasResize(){
@@ -529,6 +530,8 @@
           imageCellElement.hidden = true;
           trainingNow = 0;
           rate = 0;
+          SE[16].currentTime = 0;
+          SE[16].play();
         }
       }else if(correct==-1){
         trainingTimer = new Date();
@@ -744,7 +747,7 @@
             let blob = new Blob([str], { type: "text/csv" }); //配列に上記の文字列(str)を設定
             let link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = "data.csv";
+            link.download = userbar.value+".csv";//"data.csv";
             link.click();
         }
 
