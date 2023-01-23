@@ -88,6 +88,7 @@
     const frontbar = document.getElementById('front');
     const startButton = document.getElementById('start');
     const resultsButton = document.getElementById('results');
+    const gridButton = document.getElementById('grid');
 
     var starttime = new Date();
     var trainingTimer = new Date();
@@ -118,6 +119,7 @@
       "4L":[],
       "4Comment":0,
     };
+    var gridShow = -1;
 
 
     const Image = {
@@ -1344,6 +1346,10 @@
           correct = 0;
         });
 
+        gridButton.addEventListener('click', function () {
+          gridShow = gridShow*-1;
+        });
+
 /*function download_txt(file_name, data) {
     const blob = new Blob([data], {type: 'text/plain'});
     const url = URL.createObjectURL(blob);
@@ -1380,20 +1386,21 @@
 
 
         canvasCtx.globalCompositeOperation = 'source-over';
-/*
+
         //座標描画
-        drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS,
-            {color: '#00FF00', lineWidth: 4});
-        drawLandmarks(canvasCtx, Object.values(POSE_LANDMARKS_NEUTRAL)
-                .map(index => results.poseLandmarks[index]),
-            {color: '#00FF00', lineWidth: 2});
-        drawLandmarks(canvasCtx, Object.values(POSE_LANDMARKS_LEFT)
-                .map(index => results.poseLandmarks[index]),
-            {color: '#FF0000', lineWidth: 2});
-        drawLandmarks(canvasCtx, Object.values(POSE_LANDMARKS_RIGHT)
-                .map(index => results.poseLandmarks[index]),
-            {color: '#0000FF', lineWidth: 2});*
-*/
+        if(gridShow==1){
+          drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS,
+              {color: '#00FF00', lineWidth: 4});
+          drawLandmarks(canvasCtx, Object.values(POSE_LANDMARKS_NEUTRAL)
+                  .map(index => results.poseLandmarks[index]),
+              {color: '#00FF00', lineWidth: 2});
+          drawLandmarks(canvasCtx, Object.values(POSE_LANDMARKS_LEFT)
+                  .map(index => results.poseLandmarks[index]),
+              {color: '#FF0000', lineWidth: 2});
+          drawLandmarks(canvasCtx, Object.values(POSE_LANDMARKS_RIGHT)
+                  .map(index => results.poseLandmarks[index]),
+              {color: '#0000FF', lineWidth: 2});
+        }
 
 
         //ここで描写
