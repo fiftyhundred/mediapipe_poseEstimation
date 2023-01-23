@@ -1443,7 +1443,7 @@
                 cellUpdate(resultAngle.leftElbow, resultAngle.rightElbow,bodyAngle(results));
                 break;
               case 3:
-                cellUpdate(resultAngle.leftShoulder, resultAngle.rightShoulder,bodyAngle(results));
+                cellUpdate(results.poseLandmarks[POSE_LANDMARKS.LEFT_WRIST].y, results.poseLandmarks[POSE_LANDMARKS.RIGHT_WRIST].y,bodyAngle(results));
                 break;
               case 4:
                 cellUpdate(resultAngle.leftHip, resultAngle.rightHip,bodyAngle(results));
