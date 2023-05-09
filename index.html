@@ -50,9 +50,35 @@
     </table>
     <div class="landmark-grid-container" hidden></div>
     <div id="angle"></div>
-    <input type="text" id="Tpattern" required size="10" value = "1.0">
+    <!--<input type="text" id="Tpattern" required size="10" value = "1.0">
+    -->
+    <select id="Tpattern">
+      <option value="1">トレーニング1</option>
+      <option value="2">トレーニング2</option>
+      <option value="3">トレーニング3</option>
+      <option value="4">トレーニング4</option>
+      <option value="5">座って角度調整</option>
+      <option value="6">立って角度調整</option>
+    </select>
     <input type="text" id="user" required size="10" value = "000">
-    <input type="text" id="front" required size="10" value = "1">
+    <!--<input type="text" id="front" required size="10" value = "1">
+    <input type="text" id="count" required size="10" value = "8">
+  -->
+    <select id="front">
+      <option value="1">右</option>
+      <option value="-1">左</option>
+    </select>
+    <select id="count">
+      <option value="0">運動回数</option>
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+      <option value="5">5</option>
+      <option value="6">6</option>
+      <option value="7">7</option>
+      <option value="8">8</option>
+    </select>
     <button id="start">Start</button>
     <button id="fin">Fin</button>
     <button id="results">Results</button>
@@ -87,6 +113,7 @@
     const inputbar = document.getElementById('Tpattern');
     const userbar = document.getElementById('user');
     const frontbar = document.getElementById('front');
+    const countbar = document.getElementById('count');
     const startButton = document.getElementById('start');
     const resultsButton = document.getElementById('results');
     const gridButton = document.getElementById('grid');
@@ -100,6 +127,7 @@
     var trainingPattern = 0.0;
     var trainingLR = 0;
     var frontLR = frontbar.value;
+    var exerciseCount = countbar.value;
     var trainingNow = 0;
     var imageNode = [];//画像の座標保管
     var correct = 0;
@@ -800,17 +828,21 @@
 
         //training設定
         function startTraining(pattern){
+          if (countbar.value==0){
+            break;
+          }
           correctList = [];
           trainingNow = pattern;
           cellMake();
           frontLR = frontbar.value;
+          exerciseCount = countbar.value;
           switch (pattern) {
             case 1.0:
               var node = [-3,-4,2,3,4,1,2,3,1,2,3,1,2,3,4,11];//-1はループごとに増える、-2はnull、-3は右or左,-4は2ループごとに増える
               cnt = -1;
               trainingLR = 1;
               var timer1 = setInterval(function(){playModelVideo(node,++cnt);playTrainingMusic(node,cnt);playTrainingImage(node,cnt,pattern);},countms);
-              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(1);},(node.length*16)*countms+100);
+              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(1);},(node.length*2*exerciseCount)*countms+100);
               needVector = {
                   "rightKnee":[24,26,28],
                   "leftKnee":[23,25,27],
@@ -827,7 +859,7 @@
               var node = [-1,2,3,4,5,6,7,8,11,-2];
               cnt = -1;
               var timer1 = setInterval(function(){playModelVideo(node,++cnt);playTrainingMusic(node,cnt);playTrainingImage(node,cnt,pattern);},countms);
-              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(2);},(node.length*8-1)*countms+100);
+              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(2);},(node.length*exerciseCount-1)*countms+100);
               needVector = {
                   // "rightUde":[12,14,16],
                   // "leftUde":[11,13,15],
@@ -843,7 +875,7 @@
               var node = [-1,2,3,4,5,6,7,8,11,-2];
               cnt = -1;
               var timer1 = setInterval(function(){playModelVideo(node,++cnt);playTrainingMusic(node,cnt);playTrainingImage(node,cnt,pattern);},countms);
-              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;checksHList();trainingNow=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(3);},(node.length*8-1)*countms+100);
+              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;checksHList();trainingNow=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(3);},(node.length*exerciseCount-1)*countms+100);
               needVector = {
                   // "rightUde":[12,14,16],
                   // "leftUde":[11,13,15],
@@ -860,7 +892,7 @@
               cnt = -1;
               trainingLR = 1;
               var timer1 = setInterval(function(){playModelVideo(node,++cnt);playTrainingMusic(node,cnt);playTrainingImage(node,cnt,pattern);},countms);
-              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(4);},(node.length*16)*countms+100);
+              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(4);},(node.length*2*exerciseCount)*countms+100);
               needVector = {
                   // "rightUde":[12,14,16],
                   // "leftUde":[11,13,15],
@@ -1337,6 +1369,13 @@
 
 
         //startボタンで運動開始
+        countbar.addEventListener('click', function () {
+          if(countbar.value==0){
+            startButton.disabled = true;
+          }else{
+            startButton.disabled = false;
+          }
+        });
 
         startButton.addEventListener('click', function () {
 
