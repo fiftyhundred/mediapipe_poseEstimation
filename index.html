@@ -166,6 +166,7 @@
       "training4":document.createElement('img'),
       "leftchest":document.createElement('img'),
       "rightchest":document.createElement('img'),
+      "rearchest":document.createElement('img'),
     };
 
     Image["upallow"].src = 'image/upallow.png';
@@ -181,6 +182,7 @@
     Image["training4"].src = 'image/training4.png';
     Image["leftchest"].src = 'image/leftchest.png';
     Image["rightchest"].src = 'image/rightchest.png';
+    Image["rearchest"].src = 'image/rearchest.png';
 
     const SE = {
       0:new Audio('SE/start.mp3'),
@@ -197,8 +199,9 @@
       11:new Audio('SE/break.mp3'),
       12:new Audio('SE/rightsit.mp3'),
       13:new Audio('SE/leftsit.mp3'),
-      14:new Audio('SE/rightstand.mp3'),
-      15:new Audio('SE/leftstand.mp3'),
+      14:new Audio('SE/rearstand.mp3'),
+      /*14:new Audio('SE/rightstand.mp3'),
+      15:new Audio('SE/leftstand.mp3'),*/
       16:new Audio('SE/anglecomplete.mp3'),
     };
 
@@ -527,7 +530,7 @@
           }
         }
       }else if(trainingNow==6){//トレーニング4の角度
-        if(frontLR==1){
+        /*if(frontLR==1){
           if((bAngle>=40 && bAngle<=50) && kAngle>=140){//if((bAngle>=40 && bAngle<=70)){
             correct = 1;
           }else{
@@ -539,6 +542,12 @@
           }else{
             correct = -1;
           }
+        }
+        */
+        if(((bAngle>=160 && bAngle<=180)||(bAngle>=-180 && bAngle<=-160))  && kAngle>=140){
+          correct = 1;
+        }else{
+          correct = -1;
         }
       }
 
@@ -665,20 +674,20 @@
             }
             break;
           case 4.1:
-            if(correct<0.5 && angle<=95){
+            if(correct<0.5 && angle<=100){
               correct += 0.5;
             }
 
-            if(correct>=0.5 && correct<0.8 &&  angle>95){
+            if(correct>=0.5 && correct<0.8 &&  angle>100){
               correct += 0.5;
             }
             break;
           case 4.3:
-            if(correct<0.5 && angle>=95){
+            if(correct<0.5 && angle>=100){
               correct += 0.5;
             }
 
-            if(correct>=0.5 && correct<0.8 &&  angle<95){
+            if(correct>=0.5 && correct<0.8 &&  angle<100){
               correct += 0.5;
             }
             break;
@@ -920,6 +929,7 @@
 
               break;
             case 6.0:
+            /*
               if(frontLR==1){
                 SE[15].currentTime = 0;
                 SE[15].play();
@@ -929,6 +939,11 @@
                 SE[14].play();
                 imageElement.src = Image["rightchest"].src;
               }
+              */
+              SE[14].currentTime = 0;
+              SE[14].play();
+              imageElement.src = Image["rearchest"].src;
+
               imageElement.hidden = false;
               imageCellElement.hidden = false;
               break;
