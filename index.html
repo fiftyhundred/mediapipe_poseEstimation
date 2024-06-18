@@ -59,6 +59,8 @@
       <option value="4">トレーニング4</option>
       <option value="5">座って角度調整</option>
       <option value="6">立って角度調整</option>
+      <option value="7">座って角度調整(re)</option>
+      <option value="8">立って角度調整(re)</option>
     </select>
     <input type="text" id="user" required size="10" value = "000">
     <!--<input type="text" id="front" required size="10" value = "1">
@@ -497,7 +499,7 @@
             };
     }
 
-    function calcsit(results){//5秒間斜めになってじっと座っているかどうか
+    function calcAdjust(results){//角度調整,(5秒間斜めになってじっと座っているかどうか)
       var now = new Date();
       var rate = (now - trainingTimer)/5000;
       var bAngle = bodyAngle(results);
@@ -515,7 +517,7 @@
       }
       var kneeVector = calcAngle(hip,knee,ankle);
       var kAngle = kneeVector.angle;
-      if(trainingNow ==5){//トレーニング1の角度
+      if(trainingNow==5||trainingNow==7){//トレーニング1の角度
         if(frontLR==1){
           if((bAngle>=55 && bAngle<=65) && kAngle<=110){//if((bAngle>=40 && bAngle<=70)){
             correct = 1;
@@ -529,7 +531,7 @@
             correct = -1;
           }
         }
-      }else if(trainingNow==6){//トレーニング4の角度
+      }else if(trainingNow==6||trainingNow==8){//トレーニング4の角度
         /*if(frontLR==1){
           if((bAngle>=40 && bAngle<=50) && kAngle>=140){//if((bAngle>=40 && bAngle<=70)){
             correct = 1;
@@ -565,14 +567,35 @@
           }else if(trainingNow==6){
             setTimeout(startTraining,3000,4.0);
           }*/
-          startButton.disabled = false;
+
           correct = 0;
           imageElement.hidden = true;
           imageCellElement.hidden = true;
-          trainingNow = 0;
           rate = 0;
           SE[16].currentTime = 0;
           SE[16].play();
+          if(trainingNow==5||trainingNow==6){
+            startButton.disabled = false;
+          }else if(trainingNow==7){
+            //setTimeout(startEvent,3000);
+            setTimeout(function(){
+              SE[0].currentTime = 0;
+              SE[0].play();
+              startButton.disabled = true;
+              setTimeout(startTraining,3000,1);
+              correct = 0;
+            },3000);
+          }else if(trainingNow==8){
+            //setTimeout(startEvent,3000);
+            setTimeout(function(){
+              SE[0].currentTime = 0;
+              SE[0].play();
+              startButton.disabled = true;
+              setTimeout(startTraining,3000,4);
+              correct = 0;
+            },3000);
+          }
+          trainingNow = 0;
         }
       }else if(correct==-1){
         trainingTimer = new Date();
@@ -929,6 +952,39 @@
 
               break;
             case 6.0:
+            /*
+              if(frontLR==1){
+                SE[15].currentTime = 0;
+                SE[15].play();
+                imageElement.src = Image["leftchest"].src;
+              }else{
+                SE[14].currentTime = 0;
+                SE[14].play();
+                imageElement.src = Image["rightchest"].src;
+              }
+              */
+              SE[14].currentTime = 0;
+              SE[14].play();
+              imageElement.src = Image["rearchest"].src;
+
+              imageElement.hidden = false;
+              imageCellElement.hidden = false;
+              break;
+            case 7.0:
+              if(frontLR==1){
+                SE[13].currentTime = 0;
+                SE[13].play();
+                imageElement.src = Image["leftchest"].src;
+              }else{
+                SE[12].currentTime = 0;
+                SE[12].play();
+                imageElement.src = Image["rightchest"].src;
+              }
+              imageElement.hidden = false;
+              imageCellElement.hidden = false;
+
+              break;
+            case 8.0:
             /*
               if(frontLR==1){
                 SE[15].currentTime = 0;
@@ -1389,7 +1445,6 @@
             startButton.disabled = false;
           }
         });
-
         startButton.addEventListener('click', function () {
 
           SE[0].currentTime = 0;
@@ -1398,6 +1453,16 @@
           setTimeout(startTraining,3000,Number(inputbar.value));
           correct = 0;
         });
+
+        /*startButton.addEventListener('click', startEvent());
+
+        function startEvent(){
+          SE[0].currentTime = 0;
+          SE[0].play();
+          startButton.disabled = true;
+          setTimeout(startTraining,3000,Number(inputbar.value));
+          correct = 0;
+        }*/
 
         gridButton.addEventListener('click', function () {
           gridShow = gridShow*-1;
@@ -1484,8 +1549,10 @@
 
             //resulttxt = resulttxt+"<br>"+JSON.stringify(correctList);
             //resulttxt = resulttxt+"<br>"+JSON.stringify(sHList);
-            if(trainingNow==5||trainingNow==6){
+            if(trainingNow==5||trainingNow==6||trainingNow==7||trainingNow==8){
               angleElement.innerHTML = resulttxt;//JSON.stringify(resultAngle);
+            }else{
+              angleElement.innerHTML = "";
             }
             switch (trainingNow) {
               case 1:
@@ -1501,9 +1568,13 @@
                 cellUpdate(resultAngle.leftHip, resultAngle.rightHip,bodyAngle(results));
                 break;
               case 5:
-                calcsit(results);
+                calcAdjust(results);
               case 6:
-                calcsit(results);
+                calcAdjust(results);
+              case 7:
+                calcAdjust(results);
+              case 8:
+                calcAdjust(results);
               default:
                 break;
             }
