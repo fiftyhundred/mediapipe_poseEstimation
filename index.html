@@ -422,6 +422,7 @@
 
     //取得したい角度のポイント
     //もちろん真ん中が原点となるポイントになるように書いてね
+    //-1はposeWorldMarkerの原点ってことで1つ
     //関節スコアの参照 -> https://google.github.io/mediapipe/solutions/pose.html#pose-landmark-model-blazepose-ghum-3d
     var needVector = {
         // "rightUde":[12,14,16],
@@ -477,6 +478,7 @@
         //console.log("arrived vector",vector1,vector2)
         return {
             angle: Math.acos((vector1.x * vector2.x + vector1.y * vector2.y + vector1.z * vector2.z) / ( Math.sqrt(vector1.x**2 + vector1.y**2 + vector1.z**2) * Math.sqrt(vector2.x**2 + vector2.y**2 + vector2.z**2))) * 180 / Math.PI,
+            angle2d: Math.acos((vector1.x * vector2.x + vector1.y * vector2.y) / ( Math.sqrt(vector1.x**2 + vector1.y**2) * Math.sqrt(vector2.x**2 + vector2.y**2))) * 180 / Math.PI,
             visibility: Math.min(vector1.visibility, vector2.visibility),
             "vector1":vector1,
             "vector2":vector2,
@@ -632,11 +634,13 @@
             angle = resultAngle.leftKnee.angle;
           }
         }else if(trainingPattern>=4 && trainingPattern<5){
-          if(trainingLR==1){
+          angle = resultAngle.crotch.angle2d;
+
+          /*if(trainingLR==1){
             angle = resultAngle.rightHip.angle;
           }else{
             angle = resultAngle.leftHip.angle;
-          }
+          }*/
         }
         if(trainingPattern>=3.2 && trainingPattern<=3.6){
           var shoulderHeight = (results.poseLandmarks[POSE_LANDMARKS.RIGHT_SHOULDER].y+results.poseLandmarks[POSE_LANDMARKS.LEFT_SHOULDER].y)/2;
@@ -697,20 +701,39 @@
             }
             break;
           case 4.1:
+          /*
             if(correct<0.5 && angle<=95){
               correct += 0.5;
             }
 
             if(correct>=0.5 && correct<0.8 &&  angle>95){
               correct += 0.5;
+            }*/
+            if(correct<0.5 && angle<=25){
+              correct += 0.5;
+            }
+
+            if(correct>=0.5 && correct<0.8 &&  angle>25){
+              correct += 0.5;
             }
             break;
           case 4.3:
+          /*
             if(correct<0.5 && angle>=95){
               correct += 0.5;
             }
 
             if(correct>=0.5 && correct<0.8 &&  angle<95){
+              correct += 0.5;
+            }*/
+            if(correct<0.5 && angle>=25){
+              //var ankleHeight = results.poseLandmarks[POSE_LANDMARKS.RIGHT_ANKLE].y-results.poseLandmarks[POSE_LANDMARKS.LEFT_ANKLE].y;
+              //if(ankleHeight*trainingLR<0){
+                correct += 0.5;
+              //}
+            }
+
+            if(correct>=0.5 && correct<0.8 && angle<25){
               correct += 0.5;
             }
             break;
@@ -924,11 +947,14 @@
               var timer1 = setInterval(function(){playModelVideo(node,++cnt);playTrainingMusic(node,cnt);playTrainingImage(node,cnt,pattern);},countms);
               setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(4);},(node.length*2*exerciseCount)*countms+100);
               needVector = {
+                  "crotch":[27,-1,28],
+              };
+              /*needVector = {
                   // "rightUde":[12,14,16],
                   // "leftUde":[11,13,15],
                   "rightHip":[23,24,28],
                   "leftHip":[24,23,27],
-              };
+              };*/
               if(frontLR==1){
                 modelElement.src = "model_4R.mp4"
               }else{
@@ -1540,17 +1566,36 @@
             */
 
             for (let key in needVector){
-                resultAngle[key] = calcAngle(results.poseWorldLandmarks[needVector[key][0]],results.poseWorldLandmarks[needVector[key][1]],results.poseWorldLandmarks[needVector[key][2]]);
+              var marks=[];
+                for(var i=0;i<3;i++){
+                  if(needVector[key][i]==-1){
+                    marks[i] = {
+                      x:0.0,
+                      y:0.0,
+                      z:0.0,
+                      visibility:1.0,
+                    };
+                  }else{
+                    marks[i] = results.poseWorldLandmarks[needVector[key][i]];
+                  }
+                }
+                //resultAngle[key] = calcAngle(results.poseWorldLandmarks[needVector[key][0]],results.poseWorldLandmarks[needVector[key][1]],results.poseWorldLandmarks[needVector[key][2]]);
+                resultAngle[key] = calcAngle(marks[0],marks[1],marks[2]);
                 //resulttxt = resulttxt+ "," + String(key) + "," + String(resultAngle[key].angle) + "," + String(resultAngle[key].visibility);
             }
             //console.log(resultAngle);
             //resulttxt = resulttxt+"<h2>"+bodyAngle(results)+"</h2>";
             calcTraining(results,resultAngle);
 
+
+
             //resulttxt = resulttxt+"<br>"+JSON.stringify(correctList);
             //resulttxt = resulttxt+"<br>"+JSON.stringify(sHList);
             if(trainingNow==5||trainingNow==6||trainingNow==7||trainingNow==8){
               angleElement.innerHTML = resulttxt;//JSON.stringify(resultAngle);
+            }else if(trainingNow==4){
+              var resulttxt2 = "<h1>股の角度:"+resultAngle.crotch.angle+"°</h1>";
+              angleElement.innerHTML = resulttxt2;
             }else{
               angleElement.innerHTML = "";
             }
@@ -1565,7 +1610,8 @@
                 cellUpdate(results.poseLandmarks[POSE_LANDMARKS.LEFT_SHOULDER], results.poseLandmarks[POSE_LANDMARKS.RIGHT_SHOULDER],bodyAngle(results));
                 break;
               case 4:
-                cellUpdate(resultAngle.leftHip, resultAngle.rightHip,bodyAngle(results));
+                //cellUpdate(resultAngle.leftHip, resultAngle.rightHip,bodyAngle(results));
+                cellUpdate(resultAngle.crotch, resultAngle.crotch,bodyAngle(results));
                 break;
               case 5:
                 calcAdjust(results);
