@@ -478,6 +478,7 @@
         //console.log("arrived vector",vector1,vector2)
         return {
             angle: Math.acos((vector1.x * vector2.x + vector1.y * vector2.y + vector1.z * vector2.z) / ( Math.sqrt(vector1.x**2 + vector1.y**2 + vector1.z**2) * Math.sqrt(vector2.x**2 + vector2.y**2 + vector2.z**2))) * 180 / Math.PI,
+            angle2d: Math.acos((vector1.x * vector2.x + vector1.y * vector2.y) / ( Math.sqrt(vector1.x**2 + vector1.y**2) * Math.sqrt(vector2.x**2 + vector2.y**2))) * 180 / Math.PI,
             visibility: Math.min(vector1.visibility, vector2.visibility),
             "vector1":vector1,
             "vector2":vector2,
@@ -633,7 +634,8 @@
             angle = resultAngle.leftKnee.angle;
           }
         }else if(trainingPattern>=4 && trainingPattern<5){
-          angle = resultAngle.crotch.angle;
+          angle = resultAngle.crotch.angle2d;
+
           /*if(trainingLR==1){
             angle = resultAngle.rightHip.angle;
           }else{
@@ -707,11 +709,11 @@
             if(correct>=0.5 && correct<0.8 &&  angle>95){
               correct += 0.5;
             }*/
-            if(correct<0.5 && angle<=10){
+            if(correct<0.5 && angle<=25){
               correct += 0.5;
             }
 
-            if(correct>=0.5 && correct<0.8 &&  angle>10){
+            if(correct>=0.5 && correct<0.8 &&  angle>25){
               correct += 0.5;
             }
             break;
@@ -724,11 +726,14 @@
             if(correct>=0.5 && correct<0.8 &&  angle<95){
               correct += 0.5;
             }*/
-            if(correct<0.5 && angle>=10){
-              correct += 0.5;
+            if(correct<0.5 && angle>=25){
+              //var ankleHeight = results.poseLandmarks[POSE_LANDMARKS.RIGHT_ANKLE].y-results.poseLandmarks[POSE_LANDMARKS.LEFT_ANKLE].y;
+              //if(ankleHeight*trainingLR<0){
+                correct += 0.5;
+              //}
             }
 
-            if(correct>=0.5 && correct<0.8 &&  angle<10){
+            if(correct>=0.5 && correct<0.8 && angle<25){
               correct += 0.5;
             }
             break;
