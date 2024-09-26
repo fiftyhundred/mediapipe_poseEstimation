@@ -57,10 +57,6 @@
       <option value="2">トレーニング2</option>
       <option value="3">トレーニング3</option>
       <option value="4">トレーニング4</option>
-      <option value="5">座って角度調整</option>
-      <option value="6">立って角度調整</option>
-      <option value="7">座って角度調整(re)</option>
-      <option value="8">立って角度調整(re)</option>
     </select>
     <input type="text" id="user" required size="10" value = "000">
     <!--<input type="text" id="front" required size="10" value = "1">
@@ -168,6 +164,7 @@
       "training4":document.createElement('img'),
       "leftchest":document.createElement('img'),
       "rightchest":document.createElement('img'),
+      "frontchest":document.createElement('img'),
       "rearchest":document.createElement('img'),
     };
 
@@ -184,6 +181,7 @@
     Image["training4"].src = 'image/training4.png';
     Image["leftchest"].src = 'image/leftchest.png';
     Image["rightchest"].src = 'image/rightchest.png';
+    Image["frontchest"].src = 'image/frontchest.png';
     Image["rearchest"].src = 'image/rearchest.png';
 
     const SE = {
@@ -201,10 +199,10 @@
       11:new Audio('SE/break.mp3'),
       12:new Audio('SE/rightsit.mp3'),
       13:new Audio('SE/leftsit.mp3'),
-      14:new Audio('SE/rearstand.mp3'),
-      /*14:new Audio('SE/rightstand.mp3'),
-      15:new Audio('SE/leftstand.mp3'),*/
-      16:new Audio('SE/anglecomplete.mp3'),
+      14:new Audio('SE/frontsit.mp3'),
+      15:new Audio('SE/frontstand.mp3'),
+      16:new Audio('SE/rearstand.mp3'),
+      17:new Audio('SE/anglecomplete.mp3'),
     };
 
     function canvasResize(){
@@ -519,7 +517,7 @@
       }
       var kneeVector = calcAngle(hip,knee,ankle);
       var kAngle = kneeVector.angle;
-      if(trainingNow==5||trainingNow==7){//トレーニング1の角度
+      if(trainingNow==5){//トレーニング1の角度
         if(frontLR==1){
           if((bAngle>=55 && bAngle<=65) && kAngle<=110){//if((bAngle>=40 && bAngle<=70)){
             correct = 1;
@@ -533,7 +531,19 @@
             correct = -1;
           }
         }
-      }else if(trainingNow==6||trainingNow==8){//トレーニング4の角度
+      }else if(trainingNow==6){//トレーニング2の角度
+        if(((bAngle<=15 && bAngle>=0)||(bAngle<=0 && bAngle>=-15))){
+          correct = 1;
+        }else{
+          correct = -1;
+        }
+      }else if(trainingNow==7){//トレーニング3の角度
+        if(((bAngle<=15 && bAngle>=0)||(bAngle<=0 && bAngle>=-15))  && kAngle>=140){
+          correct = 1;
+        }else{
+          correct = -1;
+        }
+      }else if(trainingNow==8){//トレーニング4の角度
         /*if(frontLR==1){
           if((bAngle>=40 && bAngle<=50) && kAngle>=140){//if((bAngle>=40 && bAngle<=70)){
             correct = 1;
@@ -574,29 +584,32 @@
           imageElement.hidden = true;
           imageCellElement.hidden = true;
           rate = 0;
-          SE[16].currentTime = 0;
-          SE[16].play();
-          if(trainingNow==5||trainingNow==6){
-            startButton.disabled = false;
-          }else if(trainingNow==7){
+          SE[17].currentTime = 0;
+          SE[17].play();
+          if(trainingNow==5||trainingNow==6||trainingNow==7||trainingNow==8){
             //setTimeout(startEvent,3000);
+            console.log(trainingNow);
             setTimeout(function(){
               SE[0].currentTime = 0;
               SE[0].play();
               startButton.disabled = true;
-              setTimeout(startTraining,3000,1);
-              correct = 0;
-            },3000);
-          }else if(trainingNow==8){
-            //setTimeout(startEvent,3000);
-            setTimeout(function(){
-              SE[0].currentTime = 0;
-              SE[0].play();
-              startButton.disabled = true;
-              setTimeout(startTraining,3000,4);
+
+              if(trainingNow==5){
+                //setTimeout(startTraining,3000,1);
+              }
               correct = 0;
             },3000);
           }
+          if(trainingNow==5){
+            setTimeout(startTraining,5000,1);
+          }else if(trainingNow==6){
+            setTimeout(startTraining,5000,2);
+          }else if(trainingNow==7){
+            setTimeout(startTraining,5000,3);
+          }else if(trainingNow==8){
+            setTimeout(startTraining,5000,4);
+          }
+
           trainingNow = 0;
         }
       }else if(correct==-1){
@@ -709,11 +722,11 @@
             if(correct>=0.5 && correct<0.8 &&  angle>95){
               correct += 0.5;
             }*/
-            if(correct<0.5 && angle<=25){
+            if(correct<0.5 && angle<=35){
               correct += 0.5;
             }
 
-            if(correct>=0.5 && correct<0.8 &&  angle>25){
+            if(correct>=0.5 && correct<0.8 &&  angle>35){
               correct += 0.5;
             }
             break;
@@ -726,14 +739,14 @@
             if(correct>=0.5 && correct<0.8 &&  angle<95){
               correct += 0.5;
             }*/
-            if(correct<0.5 && angle>=25){
+            if(correct<0.5 && angle>=35){
               //var ankleHeight = results.poseLandmarks[POSE_LANDMARKS.RIGHT_ANKLE].y-results.poseLandmarks[POSE_LANDMARKS.LEFT_ANKLE].y;
               //if(ankleHeight*trainingLR<0){
                 correct += 0.5;
               //}
             }
 
-            if(correct>=0.5 && correct<0.8 && angle<25){
+            if(correct>=0.5 && correct<0.8 && angle<35){
               correct += 0.5;
             }
             break;
@@ -978,38 +991,23 @@
 
               break;
             case 6.0:
-            /*
-              if(frontLR==1){
-                SE[15].currentTime = 0;
-                SE[15].play();
-                imageElement.src = Image["leftchest"].src;
-              }else{
-                SE[14].currentTime = 0;
-                SE[14].play();
-                imageElement.src = Image["rightchest"].src;
-              }
-              */
               SE[14].currentTime = 0;
               SE[14].play();
-              imageElement.src = Image["rearchest"].src;
+              imageElement.src = Image["frontchest"].src;
 
               imageElement.hidden = false;
               imageCellElement.hidden = false;
-              break;
+            break;
+
             case 7.0:
-              if(frontLR==1){
-                SE[13].currentTime = 0;
-                SE[13].play();
-                imageElement.src = Image["leftchest"].src;
-              }else{
-                SE[12].currentTime = 0;
-                SE[12].play();
-                imageElement.src = Image["rightchest"].src;
-              }
+              SE[15].currentTime = 0;
+              SE[15].play();
+              imageElement.src = Image["frontchest"].src;
+
               imageElement.hidden = false;
               imageCellElement.hidden = false;
+            break;
 
-              break;
             case 8.0:
             /*
               if(frontLR==1){
@@ -1022,8 +1020,8 @@
                 imageElement.src = Image["rightchest"].src;
               }
               */
-              SE[14].currentTime = 0;
-              SE[14].play();
+              SE[16].currentTime = 0;
+              SE[16].play();
               imageElement.src = Image["rearchest"].src;
 
               imageElement.hidden = false;
@@ -1177,9 +1175,9 @@
         function drawTrainingImage(pL){
 
           if(correct>=1){
-            canvasCtx.drawImage(Image["circle"],0,0,50,50);
+            canvasCtx.drawImage(Image["circle"],0,0,150,150);
           }else if(correct<0){
-            canvasCtx.drawImage(Image["cross"],0,0,50,50);
+            canvasCtx.drawImage(Image["cross"],0,0,150,150);
           }
 
           switch (trainingPattern) {
@@ -1476,7 +1474,7 @@
           SE[0].currentTime = 0;
           SE[0].play();
           startButton.disabled = true;
-          setTimeout(startTraining,3000,Number(inputbar.value));
+          setTimeout(startTraining,3000,Number(inputbar.value)+4);
           correct = 0;
         });
 
@@ -1593,9 +1591,9 @@
             //resulttxt = resulttxt+"<br>"+JSON.stringify(sHList);
             if(trainingNow==5||trainingNow==6||trainingNow==7||trainingNow==8){
               angleElement.innerHTML = resulttxt;//JSON.stringify(resultAngle);
-            }else if(trainingNow==4){
+            /*}else if(trainingNow==4){
               var resulttxt2 = "<h1>股の角度:"+resultAngle.crotch.angle+"°</h1>";
-              angleElement.innerHTML = resulttxt2;
+              angleElement.innerHTML = resulttxt2;*/
             }else{
               angleElement.innerHTML = "";
             }
