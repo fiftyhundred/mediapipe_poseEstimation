@@ -81,6 +81,8 @@
     <button id="fin">Fin</button>
     <!--<button id="results">Results</button>-->
     <button id="grid">grid</button>
+    <input type="checkbox" id="autosave" name="autosave">
+    <label for="autosave">autosave</label>
 </div>
 
 <script type="module">
@@ -115,6 +117,8 @@
     const startButton = document.getElementById('start');
     const resultsButton = document.getElementById('results');
     const gridButton = document.getElementById('grid');
+    const autosaveCheck = document.getElementById('autosave');
+
     startButton.disabled = true;
 
     var starttime = new Date();
@@ -895,6 +899,14 @@
             console.log(user);
         });
 
+        function savedata(is_autosave){
+          if(is_autosave){
+            cellDownload(items,cells);//localにダウンロード
+            const user = Object.fromEntries(new URLSearchParams(window.location.search)).user.split(",");
+            console.log(user);
+          }
+        }
+
         //training設定
         function startTraining(pattern){
           correctList = [];
@@ -908,7 +920,7 @@
               cnt = -1;
               trainingLR = 1;
               var timer1 = setInterval(function(){playModelVideo(node,++cnt);playTrainingMusic(node,cnt);playTrainingImage(node,cnt,pattern);},countms);
-              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(1);},(node.length*2*exerciseCount)*countms+100);
+              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(1);savedata(autosaveCheck.checked);},(node.length*2*exerciseCount)*countms+100);
               needVector = {
                   "rightKnee":[24,26,28],
                   "leftKnee":[23,25,27],
@@ -925,7 +937,7 @@
               var node = [-1,2,3,4,5,6,7,8,11,-2];
               cnt = -1;
               var timer1 = setInterval(function(){playModelVideo(node,++cnt);playTrainingMusic(node,cnt);playTrainingImage(node,cnt,pattern);},countms);
-              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(2);},(node.length*exerciseCount-1)*countms+100);
+              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(2);savedata(autosaveCheck.checked);},(node.length*exerciseCount-1)*countms+100);
               needVector = {
                   // "rightUde":[12,14,16],
                   // "leftUde":[11,13,15],
@@ -941,7 +953,7 @@
               var node = [-1,2,3,4,5,6,7,8,11,-2];
               cnt = -1;
               var timer1 = setInterval(function(){playModelVideo(node,++cnt);playTrainingMusic(node,cnt);playTrainingImage(node,cnt,pattern);},countms);
-              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;checksHList();trainingNow=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(3);},(node.length*exerciseCount-1)*countms+100);
+              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;checksHList();trainingNow=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(3);savedata(autosaveCheck.checked);},(node.length*exerciseCount-1)*countms+100);
               needVector = {
                   // "rightUde":[12,14,16],
                   // "leftUde":[11,13,15],
@@ -958,7 +970,7 @@
               cnt = -1;
               trainingLR = 1;
               var timer1 = setInterval(function(){playModelVideo(node,++cnt);playTrainingMusic(node,cnt);playTrainingImage(node,cnt,pattern);},countms);
-              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(4);},(node.length*2*exerciseCount)*countms+100);
+              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(4);savedata(autosaveCheck.checked);},(node.length*2*exerciseCount)*countms+100);
               needVector = {
                   "crotch":[27,-1,28],
               };
@@ -1180,6 +1192,7 @@
             canvasCtx.drawImage(Image["cross"],0,0,150,150);
           }
 
+          //imageNodeで座標を記載→canvasCtx.drawImageで描画してる
           switch (trainingPattern) {
             case 1.0://初期設定
               if(trainingLR==1){
