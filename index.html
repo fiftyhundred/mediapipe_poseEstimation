@@ -162,6 +162,8 @@
       "triangle":document.createElement('img'),
       "roundallowRight":document.createElement('img'),
       "roundallowLeft":document.createElement('img'),
+      "roundallowRight2":document.createElement('img'),
+      "roundallowLeft2":document.createElement('img'),
       "training1":document.createElement('img'),
       "training2":document.createElement('img'),
       "training3":document.createElement('img'),
@@ -179,6 +181,8 @@
     Image["triangle"].src = 'image/triangle.png';
     Image["roundallowRight"].src = 'image/roundallowRight.png';
     Image["roundallowLeft"].src = 'image/roundallowLeft.png';
+    Image["roundallowRight2"].src = 'image/roundallowRight2.png';
+    Image["roundallowLeft2"].src = 'image/roundallowLeft2.png';
     Image["training1"].src = 'image/training1.png';
     Image["training2"].src = 'image/training2.png';
     Image["training3"].src = 'image/training3.png';
@@ -526,26 +530,50 @@
           if((bAngle>=55 && bAngle<=65) && kAngle<=110){//if((bAngle>=40 && bAngle<=70)){
             correct = 1;
           }else{
-            correct = -1;
+            if(bAngle<55){
+              correct = -1;
+            }else if(bAngle>65){
+              correct = -2;
+            }else{
+              correct = -0.5;
+            }
           }
         }else{
           if((bAngle>=-65 && bAngle<=-55) && kAngle<=110){//if((bAngle>=40 && bAngle<=70) && kAngle<=110){
             correct = 1;
           }else{
-            correct = -1;
+            if(bAngle<-65){
+              correct = -1;
+            }else if(bAngle>-55){
+              correct = -2;
+            }else{
+              correct = -0.5;
+            }
           }
         }
       }else if(trainingNow==6){//トレーニング2の角度
         if(((bAngle<=15 && bAngle>=0)||(bAngle<=0 && bAngle>=-15))){
           correct = 1;
         }else{
-          correct = -1;
+          if(bAngle<-15){
+            correct = -1;
+          }else if(bAngle>15){
+            correct = -2;
+          }else{
+            correct = -0.5;
+          }
         }
       }else if(trainingNow==7){//トレーニング3の角度
         if(((bAngle<=15 && bAngle>=0)||(bAngle<=0 && bAngle>=-15))  && kAngle>=140){
           correct = 1;
         }else{
-          correct = -1;
+          if(bAngle<-15){
+            correct = -1;
+          }else if(bAngle>15){
+            correct = -2;
+          }else{
+            correct = -0.5;
+          }
         }
       }else if(trainingNow==8){//トレーニング4の角度
         /*if(frontLR==1){
@@ -565,7 +593,13 @@
         if(((bAngle>=160 && bAngle<=180)||(bAngle>=-180 && bAngle<=-160))  && kAngle>=140){
           correct = 1;
         }else{
-          correct = -1;
+          if(bAngle<160){
+            correct = -1;
+          }else if(bAngle>-160){
+            correct = -2;
+          }else{
+            correct = -0.5;
+          }
         }
       }
 
@@ -597,10 +631,6 @@
               SE[0].currentTime = 0;
               SE[0].play();
               startButton.disabled = true;
-
-              if(trainingNow==5){
-                //setTimeout(startTraining,3000,1);
-              }
               correct = 0;
             },3000);
           }
@@ -615,6 +645,7 @@
           }
 
           trainingNow = 0;
+          trainingPattern = 0.0;
         }
       }else if(correct==-1){
         trainingTimer = new Date();
@@ -989,6 +1020,8 @@
               videoCellElement.hidden = false;
               break;
             case 5.0:
+              trainingPattern = 5.0;
+
               if(frontLR==1){
                 SE[13].currentTime = 0;
                 SE[13].play();
@@ -1003,6 +1036,8 @@
 
               break;
             case 6.0:
+              trainingPattern = 5.0;
+
               SE[14].currentTime = 0;
               SE[14].play();
               imageElement.src = Image["frontchest"].src;
@@ -1012,6 +1047,8 @@
             break;
 
             case 7.0:
+              trainingPattern = 5.0;
+
               SE[15].currentTime = 0;
               SE[15].play();
               imageElement.src = Image["frontchest"].src;
@@ -1032,6 +1069,8 @@
                 imageElement.src = Image["rightchest"].src;
               }
               */
+              trainingPattern = 5.0;
+
               SE[16].currentTime = 0;
               SE[16].play();
               imageElement.src = Image["rearchest"].src;
@@ -1145,7 +1184,7 @@
           setTimeout(function(){ trainingPattern = 0.0; },38*1000);
         }*/
 
-        function getCanvasRoundAllow(anticlockwise,startAngle,endAngle){
+        function getCanvasRoundAllow(anticlockwise,startAngle,endAngle,imgno){
           var raCanvas = document.createElement('canvas');//roundallowのキャンバス
           var raCanvasCtx = raCanvas.getContext('2d',{ willReadFrequently: true });
           var imgstr = "";
@@ -1155,11 +1194,19 @@
           raCanvasCtx.clearRect(0, 0, raCanvas.width, raCanvas.height);
           if(anticlockwise==1){
             //raCanvasCtx.lineTo(0,raCanvas.height/2);
-            imgstr = "roundallowRight";
+            if(imgno==1){
+              imgstr = "roundallowRight";
+            }else if(imgno==2){
+              imgstr = "roundallowRight2";
+            }
             clockTF = true;
           }else{
             //raCanvasCtx.lineTo(raCanvas.width,raCanvas.height/2);
-            imgstr = "roundallowLeft";
+            if(imgno==1){
+              imgstr = "roundallowLeft";
+            }else if(imgno==2){
+              imgstr = "roundallowLeft2";
+            }
             clockTF = false;
           }
           if(trainingPattern == 4.3){
@@ -1207,7 +1254,7 @@
               var now = new Date();
               var rate = (now -trainingTimer)/(4*countms);
               if(rate<=1.0){
-                var raCanvas = getCanvasRoundAllow(frontLR,180*(frontLR+1)/2,180*1.3*rate*(-1)*frontLR+180*(frontLR+1)/2);
+                var raCanvas = getCanvasRoundAllow(frontLR,180*(frontLR+1)/2,180*1.3*rate*(-1)*frontLR+180*(frontLR+1)/2,1);
                 //canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[0].x-50,imageNode[0].y-50,100,100);
               }
               break;
@@ -1231,7 +1278,7 @@
               var now = new Date();
               var rate = (now -trainingTimer)/(3*countms);
               if(rate<=1.0){
-                var raCanvas = getCanvasRoundAllow(frontLR,180*(frontLR+1)/2,180*1.3*rate*(-1)*frontLR+180*(frontLR+1)/2);
+                var raCanvas = getCanvasRoundAllow(frontLR,180*(frontLR+1)/2,180*1.3*rate*(-1)*frontLR+180*(frontLR+1)/2,1);
                 //canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[1].x-40,imageNode[1].y-40,80,80);
               }
               break;
@@ -1248,7 +1295,7 @@
               var now = new Date();
               var rate = (now -trainingTimer)/(3*countms);
               if(rate<=1.0){
-                var raCanvas = getCanvasRoundAllow(-1*frontLR,180*(-1*frontLR+1)/2,180*1.3*rate*frontLR+180*(-1*frontLR+1)/2);
+                var raCanvas = getCanvasRoundAllow(-1*frontLR,180*(-1*frontLR+1)/2,180*1.3*rate*frontLR+180*(-1*frontLR+1)/2,1);
                 //canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[1].x-40,imageNode[1].y-40,80,80);
               }
               break;
@@ -1265,7 +1312,7 @@
               var now = new Date();
               var rate = (now -trainingTimer)/(4*countms);
               if(rate<=1.0){
-                var raCanvas = getCanvasRoundAllow(-1*frontLR,180*(-1*frontLR+1)/2,180*1.3*rate*frontLR+180*(-1*frontLR+1)/2);
+                var raCanvas = getCanvasRoundAllow(-1*frontLR,180*(-1*frontLR+1)/2,180*1.3*rate*frontLR+180*(-1*frontLR+1)/2,1);
                 //canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[0].x-40,imageNode[0].y-40,80,80);
               }
 
@@ -1422,10 +1469,10 @@
               var rate = (now -trainingTimer)/(4*countms);
               if(rate<=1.0){
                 if(trainingLR==1){
-                  var raCanvas = getCanvasRoundAllow(-1*trainingLR,90,90+rate*90*1.4);
+                  var raCanvas = getCanvasRoundAllow(-1*trainingLR,90,90+rate*90*1.4,1);
                   //canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[0].x-200,imageNode[0].y,200,200);
                 }else{
-                  var raCanvas = getCanvasRoundAllow(-1*trainingLR,90,90-rate*90*1.4);
+                  var raCanvas = getCanvasRoundAllow(-1*trainingLR,90,90-rate*90*1.4,1);
                   //canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[0].x,imageNode[0].y,200,200);
                 }
               }
@@ -1446,10 +1493,10 @@
               var rate = (now -trainingTimer)/(4*countms);
               if(rate<=1.0){
                 if(trainingLR==1){
-                  var raCanvas = getCanvasRoundAllow(trainingLR,90,90-rate*90*1.4);
+                  var raCanvas = getCanvasRoundAllow(trainingLR,90,90-rate*90*1.4,1);
                   //canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[0].x-200,imageNode[0].y,200,200);
                 }else{
-                  var raCanvas = getCanvasRoundAllow(trainingLR,90,90+rate*90*1.4);
+                  var raCanvas = getCanvasRoundAllow(trainingLR,90,90+rate*90*1.4,1);
                   //canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[0].x,imageNode[0].y,200,200);
                 }
               }
@@ -1466,6 +1513,34 @@
                 correct = 0.1;
               }
               trainingLR = trainingLR*-1;
+              break;
+
+            case 5.0:
+              //canvasCtx.drawImage(Image["upallow"],0,0,150,150);
+              var hipx = (pL[POSE_LANDMARKS.RIGHT_HIP].x + pL[POSE_LANDMARKS.LEFT_HIP].x)/2
+              var hipy = (pL[POSE_LANDMARKS.RIGHT_HIP].y + pL[POSE_LANDMARKS.LEFT_HIP].y)/2
+              //imageNode.push({x:hipx*canvasElement.width,y:hipy*canvasElement.height});
+
+              //var raCanvas = getCanvasRoundAllow(frontLR,180,30,2);
+              if(correct == -1){
+                var raCanvas = getCanvasRoundAllow(1,180,30,2);
+                canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,hipx*canvasElement.width-100,hipy*canvasElement.height-100,200,200);
+              }else if(correct == -2){
+                var raCanvas = getCanvasRoundAllow(-1,0,150,2);
+                canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,hipx*canvasElement.width-100,hipy*canvasElement.height-100,200,200);
+              }
+              break;
+
+            case 6.0:
+
+              break;
+
+            case 7.0:
+
+              break;
+
+            case 8.0:
+
               break;
 
             default:
