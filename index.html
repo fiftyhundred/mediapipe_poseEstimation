@@ -135,6 +135,11 @@
     var imageNode = [];//画像の座標保管
     var correct = 0;
     var shoulderHighest = 0.0;
+    var slowPattern = 0;
+    var slowTimer;
+    var slowNode = [];//ゆっくり動かすときの角度や高さの取得,0がtrainingNow,1以降からデータ
+    var pubresults;
+    var pubresultAngle;
     var sHList = [];//shoulderHighestList
     var correctList = [];
     var correctResults = {
@@ -647,7 +652,7 @@
           trainingNow = 0;
           trainingPattern = 0.0;
         }
-      }else if(correct==-1){
+      }else if(correct<0){
         trainingTimer = new Date();
       }
     }
@@ -789,8 +794,74 @@
         }
       }
 
+      function getSlowly(){
+        var results = pubresults;
+        var resultAngle = pubresultAngle;
+        var angle;
+        if(trainingNow==1){
+          if(trainingLR==1){
+            angle = resultAngle.rightKnee.angle;
+          }else{
+            angle = resultAngle.leftKnee.angle;
+          }
+        }else if(trainingNow==4){
+          angle = resultAngle.crotch.angle2d;
+        }
+
+        switch(trainingNow){
+          case 1:
+            if(trainingLR==1){
+              //var t = new Date();
+              //slowNode.push("r:"+t.getSeconds()+","+t.getMilliseconds());
+              slowNode.push(angle);
+            }else{
+              //var t = new Date();
+              //slowNode.push("l:"+t.getSeconds()+","+t.getMilliseconds());
+              slowNode.push(angle);
+            }
+          break;
+          case 2:
+            slowNode.push(resultAngle.leftElbow.angle);
+            slowNode.push(resultAngle.rightElbow.angle);
+          break;
+          case 3:
+            slowNode.push(shoulderHighest);
+          break;
+          case 4:
+            slowNode.push(angle);
+          break;
+          default:
+
+        }
+      }
+
+      function checkSlowly(){
+        var tmode = slowNode[0];
+        var speedNode=[];
+        if(tmode!=2){
+          for(let i=1; i<slowNode.length-1; i++){
+            speedNode.push((slowNode[i+1]-slowNode[i]));
+          }
+        }else{
+          for(let i=1; i<slowNode.length-3; i=i+4){
+            speedNode.push((slowNode[i+2]-slowNode[i]));
+            speedNode.push((slowNode[i+3]-slowNode[i+1]));
+          }
+        }
+
+        for(let i=0;i<slowNode.length;i++){
+          console.log("slowNode["+i+"]:"+slowNode[i]);
+        }
+        for(let i=0; i<speedNode.length; i++){
+          console.log("speedNode["+i+"]:"+speedNode[i]);
+          cellUpdate(0, 0,"speed["+i+"]:"+speedNode[i]);
+        }
+        slowNode=[];
+        speedNode=[];
+      }
+
       function checksHList(){
-        var sHmax = Math.max(...sHList);
+        var sHmax = Math.max(...sHList);//スプレッド構文、sHList内の最大値
         for(let i=0; i<sHList.length; i++){
           if(sHList[i] < 0.7*sHmax){
             correctList.push(-1);
@@ -1036,7 +1107,7 @@
 
               break;
             case 6.0:
-              trainingPattern = 5.0;
+              trainingPattern = 6.0;
 
               SE[14].currentTime = 0;
               SE[14].play();
@@ -1047,7 +1118,7 @@
             break;
 
             case 7.0:
-              trainingPattern = 5.0;
+              trainingPattern = 7.0;
 
               SE[15].currentTime = 0;
               SE[15].play();
@@ -1069,7 +1140,7 @@
                 imageElement.src = Image["rightchest"].src;
               }
               */
-              trainingPattern = 5.0;
+              trainingPattern = 8.0;
 
               SE[16].currentTime = 0;
               SE[16].play();
@@ -1231,7 +1302,27 @@
           return raCanvas;
         }
 
-        function drawTrainingImage(pL){
+        function getCanvasCircularSector(startAngle,endAngle,csstyle){//扇形
+          var csCanvas = document.createElement('canvas');//CircularSectorのキャンバス
+          var csCanvasCtx = csCanvas.getContext('2d',{ willReadFrequently: true });
+          csCanvas.width = 256;
+          csCanvas.height = 256;
+          csCanvasCtx.clearRect(0, 0, csCanvas.width, csCanvas.height);
+
+          csCanvasCtx.beginPath();
+          csCanvasCtx.moveTo(csCanvas.width/2,csCanvas.height/2);
+          csCanvasCtx.lineTo(csCanvas.width/2*Math.cos(startAngle/180*Math.PI)+csCanvas.width/2,csCanvas.height/2*Math.sin(startAngle/180*Math.PI)+csCanvas.height/2);
+          csCanvasCtx.arc(csCanvas.width/2,csCanvas.height/2,csCanvas.width/2,startAngle/180*Math.PI,endAngle/180*Math.PI);
+          csCanvasCtx.lineTo(csCanvas.width/2,csCanvas.height/2);
+          csCanvasCtx.closePath();
+          csCanvasCtx.fillStyle = csstyle;//csstyle = "rgba(100,100,255,0.5)"
+          csCanvasCtx.fill();
+
+          return csCanvas;
+        }
+
+        function drawTrainingImage(results){
+          var pL = results.poseLandmarks;
 
           if(correct>=1){
             canvasCtx.drawImage(Image["circle"],0,0,150,150);
@@ -1249,6 +1340,7 @@
               }
               trainingPattern = 1.1;
               trainingTimer = new Date();
+              slowPattern = 1;
               break;
             case 1.1://膝伸ばし
               var now = new Date();
@@ -1273,6 +1365,7 @@
                 correctList.push(correct);
                 correct = 0.1;
               }
+              slowPattern = 2;
               break;
             case 1.3://膝キープ
               var now = new Date();
@@ -1307,6 +1400,7 @@
               }else{
                 correct = 0.1;
               }*/
+              slowPattern = 1;
               break;
             case 1.7://膝曲げ
               var now = new Date();
@@ -1329,6 +1423,7 @@
                 correct = 0.1;
               }
               trainingLR = trainingLR*-1;
+              slowPattern = 2;
               break;
             case 2.0://初期設定
               //canvasCtx.drawImage(Image["upallow"],pL[POSE_LANDMARKS.RIGHT_WRIST].x*canvasElement.width,pL[POSE_LANDMARKS.RIGHT_WRIST].y*canvasElement.height,50,50);
@@ -1341,6 +1436,7 @@
               imageNode.push({x:leftElbowFuture.x*canvasElement.width,y:leftElbowFuture.y*canvasElement.height});
               trainingPattern = 2.1;
               trainingTimer = new Date();
+              slowPattern = 1;
               break;
             case 2.1://肘伸ばし
               var now = new Date();
@@ -1362,6 +1458,7 @@
                 correctList.push(correct);
                 correct = 0.1;
               }
+              slowPattern = 2;
               break;
             case 2.3://肘曲げ
               var now = new Date();
@@ -1376,7 +1473,7 @@
                 */
 
               }
-
+              slowPattern -= 1;
               break;
             case 2.4://初期戻し
               trainingTimer = new Date();
@@ -1389,6 +1486,7 @@
                 correctList.push(correct);
                 correct = 0.1;
               }
+              slowPattern = 2;
               break;
             case 3.0://初期設定
               trainingPattern = 3.1;
@@ -1396,6 +1494,7 @@
               imageNode.push({x:pL[POSE_LANDMARKS.RIGHT_SHOULDER].x*canvasElement.width,y:pL[POSE_LANDMARKS.RIGHT_SHOULDER].y*canvasElement.height});
               imageNode.push({x:pL[POSE_LANDMARKS.LEFT_SHOULDER].x*canvasElement.width,y:pL[POSE_LANDMARKS.LEFT_SHOULDER].y*canvasElement.height});
               break;
+              slowPattern = 1;
             case 3.1:
               var now = new Date();
               var rate = (now -trainingTimer)/(4*countms);
@@ -1423,6 +1522,7 @@
               trainingTimer = new Date();
               imageNode.push({x:pL[POSE_LANDMARKS.RIGHT_SHOULDER].x*canvasElement.width,y:pL[POSE_LANDMARKS.RIGHT_SHOULDER].y*canvasElement.height});
               imageNode.push({x:pL[POSE_LANDMARKS.LEFT_SHOULDER].x*canvasElement.width,y:pL[POSE_LANDMARKS.LEFT_SHOULDER].y*canvasElement.height});
+              slowPattern = 2;
               break;
             case 3.5:
               var now = new Date();
@@ -1431,6 +1531,7 @@
                 //canvasCtx.drawImage(Image["downallow"],imageNode[2].x-25,imageNode[2].y-25,50,50*rate);
                 //canvasCtx.drawImage(Image["downallow"],imageNode[3].x-25,imageNode[3].y-25,50,50*rate);
               }
+              slowPattern = 1;
               break;
             case 3.6:
               trainingPattern = 3.7;
@@ -1451,6 +1552,7 @@
               trainingTimer = new Date();
               trainingPattern = 0.0;
               imageNode = [];
+              slowPattern = 2;
               break;
 
             case 4.0://初期設定
@@ -1463,6 +1565,7 @@
                 //imageNode.push({x:640,y:360});
                 imageNode.push({x:pL[POSE_LANDMARKS.LEFT_KNEE].x*canvasElement.width,y:pL[POSE_LANDMARKS.LEFT_KNEE].y*canvasElement.height});
               }
+              slowPattern = 1;
               break;
             case 4.1://足あげ
               var now = new Date();
@@ -1487,6 +1590,7 @@
                 correctList.push(correct);
                 correct = 0.1;
               }
+              slowPattern = 2;
               break;
             case 4.3://足下げ
               var now = new Date();
@@ -1500,6 +1604,7 @@
                   //canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,imageNode[0].x,imageNode[0].y,200,200);
                 }
               }
+              slowPattern = 1;
               break;
             case 4.4://初期戻し
               trainingTimer = new Date();
@@ -1513,6 +1618,7 @@
                 correct = 0.1;
               }
               trainingLR = trainingLR*-1;
+              slowPattern = 2;
               break;
 
             case 5.0:
@@ -1529,17 +1635,83 @@
                 var raCanvas = getCanvasRoundAllow(-1,0,150,2);
                 canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,hipx*canvasElement.width-100,hipy*canvasElement.height-100,200,200);
               }
+
+              if(frontLR==1){
+                var csAimCanvas = getCanvasCircularSector(90-65,90-55,"rgba(0,255,0,0.1)");
+                canvasCtx.drawImage(csAimCanvas,0,0,csAimCanvas.width,csAimCanvas.height,canvasElement.width-imageCellElement.width-csAimCanvas.width,0,csAimCanvas.width,csAimCanvas.height);
+              }else{
+                var csAimCanvas = getCanvasCircularSector(90+55,90+65,"rgba(0,255,0,0.1)");//???
+                canvasCtx.drawImage(csAimCanvas,0,0,csAimCanvas.width,csAimCanvas.height,canvasElement.width-imageCellElement.width-csAimCanvas.width,0,csAimCanvas.width,csAimCanvas.height);
+              }
+
+              var csFaceCanvas = getCanvasCircularSector(-bodyAngle(results)-2+90,-bodyAngle(results)+2+90,"rgba(255,0,0,0.3)");
+              canvasCtx.drawImage(csFaceCanvas,0,0,csFaceCanvas.width,csFaceCanvas.height,canvasElement.width-imageCellElement.width-csFaceCanvas.width,0,csFaceCanvas.width,csFaceCanvas.height);
+
               break;
 
             case 6.0:
+              var hipx = (pL[POSE_LANDMARKS.RIGHT_HIP].x + pL[POSE_LANDMARKS.LEFT_HIP].x)/2
+              var hipy = (pL[POSE_LANDMARKS.RIGHT_HIP].y + pL[POSE_LANDMARKS.LEFT_HIP].y)/2
+              //imageNode.push({x:hipx*canvasElement.width,y:hipy*canvasElement.height});
+
+              //var raCanvas = getCanvasRoundAllow(frontLR,180,30,2);
+              if(correct == -1){
+                var raCanvas = getCanvasRoundAllow(1,180,30,2);
+                canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,hipx*canvasElement.width-100,hipy*canvasElement.height-100,200,200);
+              }else if(correct == -2){
+                var raCanvas = getCanvasRoundAllow(-1,0,150,2);
+                canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,hipx*canvasElement.width-100,hipy*canvasElement.height-100,200,200);
+              }
+
+              var csAimCanvas = getCanvasCircularSector(90-5,90+5,"rgba(0,255,0,0.1)");
+              canvasCtx.drawImage(csAimCanvas,0,0,csAimCanvas.width,csAimCanvas.height,canvasElement.width-imageCellElement.width-csAimCanvas.width,0,csAimCanvas.width,csAimCanvas.height);
+
+              var csFaceCanvas = getCanvasCircularSector(-bodyAngle(results)-2+90,-bodyAngle(results)+2+90,"rgba(255,0,0,0.3)");
+              canvasCtx.drawImage(csFaceCanvas,0,0,csFaceCanvas.width,csFaceCanvas.height,canvasElement.width-imageCellElement.width-csFaceCanvas.width,0,csFaceCanvas.width,csFaceCanvas.height);
 
               break;
 
             case 7.0:
+              var hipx = (pL[POSE_LANDMARKS.RIGHT_HIP].x + pL[POSE_LANDMARKS.LEFT_HIP].x)/2
+              var hipy = (pL[POSE_LANDMARKS.RIGHT_HIP].y + pL[POSE_LANDMARKS.LEFT_HIP].y)/2
+              //imageNode.push({x:hipx*canvasElement.width,y:hipy*canvasElement.height});
+
+              //var raCanvas = getCanvasRoundAllow(frontLR,180,30,2);
+              if(correct == -1){
+                var raCanvas = getCanvasRoundAllow(1,180,30,2);
+                canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,hipx*canvasElement.width-100,hipy*canvasElement.height-100,200,200);
+              }else if(correct == -2){
+                var raCanvas = getCanvasRoundAllow(-1,0,150,2);
+                canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,hipx*canvasElement.width-100,hipy*canvasElement.height-100,200,200);
+              }
+
+              var csAimCanvas = getCanvasCircularSector(90-5,90+5,"rgba(0,255,0,0.1)");
+              canvasCtx.drawImage(csAimCanvas,0,0,csAimCanvas.width,csAimCanvas.height,canvasElement.width-imageCellElement.width-csAimCanvas.width,0,csAimCanvas.width,csAimCanvas.height);
+
+              var csFaceCanvas = getCanvasCircularSector(-bodyAngle(results)-2+90,-bodyAngle(results)+2+90,"rgba(255,0,0,0.3)");
+              canvasCtx.drawImage(csFaceCanvas,0,0,csFaceCanvas.width,csFaceCanvas.height,canvasElement.width-imageCellElement.width-csFaceCanvas.width,0,csFaceCanvas.width,csFaceCanvas.height);
 
               break;
 
             case 8.0:
+              var hipx = (pL[POSE_LANDMARKS.RIGHT_HIP].x + pL[POSE_LANDMARKS.LEFT_HIP].x)/2
+              var hipy = (pL[POSE_LANDMARKS.RIGHT_HIP].y + pL[POSE_LANDMARKS.LEFT_HIP].y)/2
+              //imageNode.push({x:hipx*canvasElement.width,y:hipy*canvasElement.height});
+
+              //var raCanvas = getCanvasRoundAllow(frontLR,180,30,2);
+              if(correct == -1){
+                var raCanvas = getCanvasRoundAllow(1,180,30,2);
+                canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,hipx*canvasElement.width-100,hipy*canvasElement.height-100,200,200);
+              }else if(correct == -2){
+                var raCanvas = getCanvasRoundAllow(-1,0,150,2);
+                canvasCtx.drawImage(raCanvas,0,0,raCanvas.width,raCanvas.height,hipx*canvasElement.width-100,hipy*canvasElement.height-100,200,200);
+              }
+
+              var csAimCanvas = getCanvasCircularSector(270-5,270+5,"rgba(0,255,0,0.1)");
+              canvasCtx.drawImage(csAimCanvas,0,0,csAimCanvas.width,csAimCanvas.height,canvasElement.width-imageCellElement.width-csAimCanvas.width,0,csAimCanvas.width,csAimCanvas.height);
+
+              var csFaceCanvas = getCanvasCircularSector(-bodyAngle(results)-2+90,-bodyAngle(results)+2+90,"rgba(255,0,0,0.3)");
+              canvasCtx.drawImage(csFaceCanvas,0,0,csFaceCanvas.width,csFaceCanvas.height,canvasElement.width-imageCellElement.width-csFaceCanvas.width,0,csFaceCanvas.width,csFaceCanvas.height);
 
               break;
 
@@ -1634,7 +1806,7 @@
 
 
         //ここで描写
-        drawTrainingImage(results.poseLandmarks);
+        drawTrainingImage(results);
 
         canvasCtx.restore();
 
@@ -1672,7 +1844,71 @@
             //console.log(resultAngle);
             //resulttxt = resulttxt+"<h2>"+bodyAngle(results)+"</h2>";
             calcTraining(results,resultAngle);
+            pubresults = results;
+            pubresultAngle = resultAngle;
 
+            if(slowPattern==1){
+              slowTimer = setInterval(function(){
+                getSlowly();
+                switch (trainingNow) {
+                  case 1:
+                    cellUpdate(pubresultAngle.leftKnee, pubresultAngle.rightKnee,"slowly["+slowNode.length-1+"]:"+slowNode[slowNode.length-1]);
+                    break;
+                  case 2:
+                    cellUpdate(pubresultAngle.leftElbow, pubresultAngle.rightElbow,"slowly["+slowNode.length-1+"]:"+slowNode[slowNode.length-1]);
+                    break;
+                  case 3:
+                    cellUpdate(pubresults.poseLandmarks[POSE_LANDMARKS.LEFT_SHOULDER], pubresults.poseLandmarks[POSE_LANDMARKS.RIGHT_SHOULDER],"slowly["+slowNode.length-1+"]:"+slowNode[slowNode.length-1]);
+                    break;
+                  case 4:
+                    cellUpdate(pubresultAngle.crotch, pubresultAngle.crotch,"slowly["+slowNode.length-1+"]:"+slowNode[slowNode.length-1]);
+                    break;
+                  default:
+                    break;
+                }
+              },countms/2);
+              slowNode.push(trainingNow);
+              getSlowly();
+              switch (trainingNow) {
+                case 1:
+                  cellUpdate(pubresultAngle.leftKnee, pubresultAngle.rightKnee,"slowly["+slowNode.length-1+"]:"+slowNode[slowNode.length-1]);
+                  break;
+                case 2:
+                  cellUpdate(pubresultAngle.leftElbow, pubresultAngle.rightElbow,"slowly["+slowNode.length-1+"]:"+slowNode[slowNode.length-1]);
+                  break;
+                case 3:
+                  cellUpdate(pubresults.poseLandmarks[POSE_LANDMARKS.LEFT_SHOULDER], pubresults.poseLandmarks[POSE_LANDMARKS.RIGHT_SHOULDER],"slowly["+slowNode.length-1+"]:"+slowNode[slowNode.length-1]);
+                  break;
+                case 4:
+                  cellUpdate(pubresultAngle.crotch, pubresultAngle.crotch,"slowly["+slowNode.length-1+"]:"+slowNode[slowNode.length-1]);
+                  break;
+                default:
+                  break;
+              }
+              slowPattern += 0.5;
+            }else if(slowPattern==2){
+              clearInterval(slowTimer);
+              getSlowly();
+              switch (trainingNow) {
+                case 1:
+                  cellUpdate(pubresultAngle.leftKnee, pubresultAngle.rightKnee,"slowly:"+slowNode[slowNode.length-1]);
+                  break;
+                case 2:
+                  cellUpdate(pubresultAngle.leftElbow, pubresultAngle.rightElbow,"slowly:"+slowNode[slowNode.length-1]);
+                  break;
+                case 3:
+                  cellUpdate(pubresults.poseLandmarks[POSE_LANDMARKS.LEFT_SHOULDER], pubresults.poseLandmarks[POSE_LANDMARKS.RIGHT_SHOULDER],"slowly:"+slowNode[slowNode.length-1]);
+                  break;
+                case 4:
+                  cellUpdate(pubresultAngle.crotch, pubresultAngle.crotch,"slowly:"+slowNode[slowNode.length-1]);
+                  break;
+                default:
+                  break;
+              }
+              checkSlowly();
+              slowPattern += 0.5;
+              //slowNodeから情報を得て、ゆっくり度の計算
+            }
 
 
             //resulttxt = resulttxt+"<br>"+JSON.stringify(correctList);
