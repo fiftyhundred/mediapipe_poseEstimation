@@ -1473,7 +1473,10 @@
                 */
 
               }
-              slowPattern -= 1;
+              if(slowPattern>=2){
+                slowPattern = 1;
+              }
+              console.log(slowPattern);
               break;
             case 2.4://初期戻し
               trainingTimer = new Date();
@@ -1852,16 +1855,16 @@
                 getSlowly();
                 switch (trainingNow) {
                   case 1:
-                    cellUpdate(pubresultAngle.leftKnee, pubresultAngle.rightKnee,"slowly["+slowNode.length-1+"]:"+slowNode[slowNode.length-1]);
+                    cellUpdate(pubresultAngle.leftKnee, pubresultAngle.rightKnee,"slowly["+(slowNode.length-1)+"]:"+slowNode[slowNode.length-1]);
                     break;
                   case 2:
-                    cellUpdate(pubresultAngle.leftElbow, pubresultAngle.rightElbow,"slowly["+slowNode.length-1+"]:"+slowNode[slowNode.length-1]);
+                    cellUpdate(pubresultAngle.leftElbow, pubresultAngle.rightElbow,"slowly["+(slowNode.length-1)+"]:"+slowNode[slowNode.length-1]);
                     break;
                   case 3:
-                    cellUpdate(pubresults.poseLandmarks[POSE_LANDMARKS.LEFT_SHOULDER], pubresults.poseLandmarks[POSE_LANDMARKS.RIGHT_SHOULDER],"slowly["+slowNode.length-1+"]:"+slowNode[slowNode.length-1]);
+                    cellUpdate(pubresults.poseLandmarks[POSE_LANDMARKS.LEFT_SHOULDER], pubresults.poseLandmarks[POSE_LANDMARKS.RIGHT_SHOULDER],"slowly["+(slowNode.length-1)+"]:"+slowNode[slowNode.length-1]);
                     break;
                   case 4:
-                    cellUpdate(pubresultAngle.crotch, pubresultAngle.crotch,"slowly["+slowNode.length-1+"]:"+slowNode[slowNode.length-1]);
+                    cellUpdate(pubresultAngle.crotch, pubresultAngle.crotch,"slowly["+(slowNode.length-1)+"]:"+slowNode[slowNode.length-1]);
                     break;
                   default:
                     break;
@@ -1871,16 +1874,16 @@
               getSlowly();
               switch (trainingNow) {
                 case 1:
-                  cellUpdate(pubresultAngle.leftKnee, pubresultAngle.rightKnee,"slowly["+slowNode.length-1+"]:"+slowNode[slowNode.length-1]);
+                  cellUpdate(pubresultAngle.leftKnee, pubresultAngle.rightKnee,"slowly["+(slowNode.length-1)+"]:"+slowNode[slowNode.length-1]);
                   break;
                 case 2:
-                  cellUpdate(pubresultAngle.leftElbow, pubresultAngle.rightElbow,"slowly["+slowNode.length-1+"]:"+slowNode[slowNode.length-1]);
+                  cellUpdate(pubresultAngle.leftElbow, pubresultAngle.rightElbow,"slowly["+(slowNode.length-1)+"]:"+slowNode[slowNode.length-1]);
                   break;
                 case 3:
-                  cellUpdate(pubresults.poseLandmarks[POSE_LANDMARKS.LEFT_SHOULDER], pubresults.poseLandmarks[POSE_LANDMARKS.RIGHT_SHOULDER],"slowly["+slowNode.length-1+"]:"+slowNode[slowNode.length-1]);
+                  cellUpdate(pubresults.poseLandmarks[POSE_LANDMARKS.LEFT_SHOULDER], pubresults.poseLandmarks[POSE_LANDMARKS.RIGHT_SHOULDER],"slowly["+(slowNode.length-1)+"]:"+slowNode[slowNode.length-1]);
                   break;
                 case 4:
-                  cellUpdate(pubresultAngle.crotch, pubresultAngle.crotch,"slowly["+slowNode.length-1+"]:"+slowNode[slowNode.length-1]);
+                  cellUpdate(pubresultAngle.crotch, pubresultAngle.crotch,"slowly["+(slowNode.length-1)+"]:"+slowNode[slowNode.length-1]);
                   break;
                 default:
                   break;
