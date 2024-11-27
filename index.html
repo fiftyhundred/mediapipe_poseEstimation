@@ -812,12 +812,11 @@
         var results = pubresults;
         var resultAngle = pubresultAngle;
         var angle;
+        var angleR;
+        var angleL;
         if(trainingNow==1){
-          if(trainingLR==1){
-            angle = resultAngle.rightKnee.angle;
-          }else{
-            angle = resultAngle.leftKnee.angle;
-          }
+            angleR = resultAngle.rightKnee.angle;
+            angleL = resultAngle.leftKnee.angle;
         }else if(trainingNow==4){
           angle = resultAngle.crotch.angle2d;
         }
@@ -827,11 +826,12 @@
             if(trainingLR==1){
               //var t = new Date();
               //slowNode.push("r:"+t.getSeconds()+","+t.getMilliseconds());
-              slowNode.push(angle);
+              //slowNode.push(angle);
+              slowNode.push(Math.max(angleR,angleL));
             }else{
               //var t = new Date();
               //slowNode.push("l:"+t.getSeconds()+","+t.getMilliseconds());
-              slowNode.push(angle);
+              slowNode.push(Math.max(angleR,angleL));
             }
           break;
           case 2:
