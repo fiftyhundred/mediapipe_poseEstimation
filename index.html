@@ -216,7 +216,10 @@
       15:new Audio('SE/frontstand.mp3'),
       16:new Audio('SE/rearstand.mp3'),
       17:new Audio('SE/anglecomplete.mp3'),
+      18:new Audio('SE/doremi.mp3'),
     };
+
+    var doremiplay = false;
 
     function canvasResize(){
       canvasElement.width = document.body.clientWidth*2/3;
@@ -609,6 +612,12 @@
       }
 
       if(correct==1){
+        if(trainingNow==8){
+          if(!doremiplay){
+            doremiplay=true;
+            SE[18].play();
+          }
+        }
         if(rate>1){
           //終了時処理
           /*SE[0].currentTime = 0;
@@ -648,12 +657,17 @@
           }else if(trainingNow==8){
             setTimeout(startTraining,5000,4);
           }
-
+          SE[18].pause();
+          SE[18].currentTime = 0;
+          doremiplay = false;
           trainingNow = 0;
           trainingPattern = 0.0;
         }
       }else if(correct<0){
         trainingTimer = new Date();
+        SE[18].pause();
+        SE[18].currentTime = 0;
+        doremiplay = false;
       }
     }
 
