@@ -134,10 +134,12 @@
     var trainingNow = 0;
     var imageNode = [];//画像の座標保管
     var correct = 0;
-    var shoulderHighest = 0.0;
+    var shoulderHighest = 9999.0;
     var slowPattern = 0;
     var slowTimer;
     var slowNode = [];//ゆっくり動かすときの角度や高さの取得,0がtrainingNow,1以降からデータ
+    var slowcnt = 0;
+    var trainingcnt = 0;
     var pubresults;
     var pubresultAngle;
     var sHList = [];//shoulderHighestList
@@ -217,6 +219,8 @@
       16:new Audio('SE/rearstand.mp3'),
       17:new Audio('SE/anglecomplete.mp3'),
       18:new Audio('SE/doremi.mp3'),
+      19:new Audio('SE/toe5s.mp3'),
+      20:new Audio('SE/slowly.mp3'),
     };
 
     var doremiplay = false;
@@ -609,10 +613,19 @@
             correct = -0.5;
           }
         }
+      }else if(trainingNow==7.5){//トレーニング3のつま先立ち
+        var pL = pubresults.poseLandmarks;
+        var yR = pL[POSE_LANDMARKS.RIGHT_SHOULDER].y;
+        var yL = pL[POSE_LANDMARKS.LEFT_SHOULDER].y;
+        var shoulderHeight = (yR+yL)/2;
+        if(shoulderHighest>=shoulderHeight){//座標は下の方ほどでかい(原点が左上)
+          shoulderHighest = shoulderHeight;
+        }
+
       }
 
       if(correct==1){
-        if(trainingNow==8){
+        if(trainingNow==5||trainingNow==6||trainingNow==7||trainingNow==8){
           if(!doremiplay){
             doremiplay=true;
             SE[18].play();
@@ -636,10 +649,10 @@
           imageElement.hidden = true;
           imageCellElement.hidden = true;
           rate = 0;
-          SE[17].currentTime = 0;
-          SE[17].play();
-          if(trainingNow==5||trainingNow==6||trainingNow==7||trainingNow==8){
+          if(trainingNow==5||trainingNow==6||trainingNow==7.5||trainingNow==8){//if(trainingNow==5||trainingNow==6||trainingNow==7||trainingNow==8){
             //setTimeout(startEvent,3000);
+            SE[17].currentTime = 0;
+            SE[17].play();
             console.log(trainingNow);
             setTimeout(function(){
               SE[0].currentTime = 0;
@@ -653,7 +666,17 @@
           }else if(trainingNow==6){
             setTimeout(startTraining,5000,2);
           }else if(trainingNow==7){
+            cnt = -1;
+            var timer1;
+            setTimeout(function(){trainingNow = 7.5;trainingTimer = new Date();timer1 = setInterval(function(){playTrainingMusic([1,2,3,4,5],++cnt);correct = 1;},countms);},3000);
+            setTimeout(function(){clearInterval(timer1);},countms*6+3000);
+            SE[19].currentTime = 0;
+            SE[19].play();
+            trainingTimer = new Date();
+            shoulderHighest = 9999.0;
+          }else if(trainingNow==7.5){
             setTimeout(startTraining,5000,3);
+            console.log(shoulderHighest);
           }else if(trainingNow==8){
             setTimeout(startTraining,5000,4);
           }
@@ -711,7 +734,7 @@
         }
         if(trainingPattern>=3.2 && trainingPattern<=3.6){
           var shoulderHeight = (results.poseLandmarks[POSE_LANDMARKS.RIGHT_SHOULDER].y+results.poseLandmarks[POSE_LANDMARKS.LEFT_SHOULDER].y)/2;
-          if(shoulderHighest>=shoulderHeight){
+          if(shoulderHighest>=shoulderHeight){//座標は下の方ほどでかい(原点が左上)
             shoulderHighest = shoulderHeight;
           }
         }
@@ -871,8 +894,41 @@
           console.log("speedNode["+i+"]:"+speedNode[i]);
           cellUpdate(0, 0,"speed["+i+"]:"+speedNode[i]);
         }
+        //ここらへんで判定
+        var snl = speedNode.length-1;
+        trainingcnt++;
+        if(tmode==1){
+          var snsum = speedNode[snl-2]+speedNode[snl-1]+speedNode[snl]+((trainingcnt%2)*2-1)*(Math.abs(speedNode[snl-2])+Math.abs(speedNode[snl-1])+Math.abs(speedNode[snl]));//整流にする、+だけか-だけかに
+          snsum = Math.abs(snsum)/2;
+          if(snsum<10){
+            slowcnt++;
+            console.log("slow1");
+          }
+        }else if(tmode==2){
+          var snsumR = speedNode[snl-4]+speedNode[snl-2]+speedNode[snl]+((trainingcnt%2)*2-1)*(Math.abs(speedNode[snl-4])+Math.abs(speedNode[snl-2])+Math.abs(speedNode[snl]));//整流にする、+だけか-だけかに
+          var snsumL = speedNode[snl-5]+speedNode[snl-3]+speedNode[snl-1]+((trainingcnt%2)*2-1)*(Math.abs(speedNode[snl-5])+Math.abs(speedNode[snl-3])+Math.abs(speedNode[snl-1]));//整流にする、+だけか-だけかに
+          snsum = (Math.abs(snsumL)+Math.abs(snsumR))/4;
+          if(snsum<8){
+            slowcnt++;
+            console.log("slow2");
+          }
+        }else if(tmode==3){
+          var snsum = Math.abs(speedNode[snl-2])+Math.abs(speedNode[snl-1])+Math.abs(speedNode[snl]);//整流にする、+だけか-だけかに
+          console.log("slow3");
+          if(snsum<5){
+            slowcnt++;
+          }
+        }else if(tmode==4){
+          var snsum = speedNode[snl-2]+speedNode[snl-1]+speedNode[snl]+((trainingcnt%2)*2-1)*(Math.abs(speedNode[snl-2])+Math.abs(speedNode[snl-1])+Math.abs(speedNode[snl]));//整流にする、+だけか-だけかに
+          if(snsum<5){
+            slowcnt++;
+            console.log("slow4");
+          }
+        }
         slowNode=[];
         speedNode=[];
+        console.log(snsum);
+        console.log(slowcnt);
       }
 
       function checksHList(){
@@ -1031,13 +1087,14 @@
           cellMake();
           frontLR = frontbar.value;
           exerciseCount = countbar.value;
+          trainingcnt = 0;
           switch (pattern) {
             case 1.0:
               var node = [-3,-4,2,3,4,1,2,3,1,2,3,1,2,3,4,11];//-1はループごとに増える、-2はnull、-3は右or左,-4は2ループごとに増える
               cnt = -1;
               trainingLR = 1;
               var timer1 = setInterval(function(){playModelVideo(node,++cnt);playTrainingMusic(node,cnt);playTrainingImage(node,cnt,pattern);},countms);
-              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(1);savedata(autosaveCheck.checked);},(node.length*2*exerciseCount)*countms+100);
+              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;slowcnt=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(1);savedata(autosaveCheck.checked);},(node.length*2*exerciseCount)*countms+100);
               needVector = {
                   "rightKnee":[24,26,28],
                   "leftKnee":[23,25,27],
@@ -1054,7 +1111,7 @@
               var node = [-1,2,3,4,5,6,7,8,11,-2];
               cnt = -1;
               var timer1 = setInterval(function(){playModelVideo(node,++cnt);playTrainingMusic(node,cnt);playTrainingImage(node,cnt,pattern);},countms);
-              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(2);savedata(autosaveCheck.checked);},(node.length*exerciseCount-1)*countms+100);
+              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;slowcnt=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(2);savedata(autosaveCheck.checked);},(node.length*exerciseCount-1)*countms+100);
               needVector = {
                   // "rightUde":[12,14,16],
                   // "leftUde":[11,13,15],
@@ -1070,7 +1127,7 @@
               var node = [-1,2,3,4,5,6,7,8,11,-2];
               cnt = -1;
               var timer1 = setInterval(function(){playModelVideo(node,++cnt);playTrainingMusic(node,cnt);playTrainingImage(node,cnt,pattern);},countms);
-              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;checksHList();trainingNow=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(3);savedata(autosaveCheck.checked);},(node.length*exerciseCount-1)*countms+100);
+              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;checksHList();trainingNow=0;slowcnt=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(3);savedata(autosaveCheck.checked);},(node.length*exerciseCount-1)*countms+100);
               needVector = {
                   // "rightUde":[12,14,16],
                   // "leftUde":[11,13,15],
@@ -1087,7 +1144,7 @@
               cnt = -1;
               trainingLR = 1;
               var timer1 = setInterval(function(){playModelVideo(node,++cnt);playTrainingMusic(node,cnt);playTrainingImage(node,cnt,pattern);},countms);
-              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(4);savedata(autosaveCheck.checked);},(node.length*2*exerciseCount)*countms+100);
+              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;slowcnt=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(4);savedata(autosaveCheck.checked);},(node.length*2*exerciseCount)*countms+100);
               needVector = {
                   "crotch":[27,-1,28],
               };
@@ -1353,12 +1410,19 @@
               }else{
                 imageNode.push({x:pL[POSE_LANDMARKS.LEFT_KNEE].x*canvasElement.width,y:pL[POSE_LANDMARKS.LEFT_KNEE].y*canvasElement.height});
               }
+              if(slowcnt>=16 && Math.floor(slowcnt)==slowcnt){
+                setTimeout(function(){
+                  SE[20].currentTime = 0;
+                  SE[20].play();
+                },800);
+                slowcnt=slowcnt+0.1;
+              }
               trainingPattern = 1.1;
               trainingTimer = new Date();
               slowPattern = 1;
               break;
             case 1.1://膝伸ばし
-              var now = new Date();
+              var now = new Date();i
               var rate = (now -trainingTimer)/(4*countms);
               if(rate<=1.0){
                 var raCanvas = getCanvasRoundAllow(frontLR,180*(frontLR+1)/2,180*1.3*rate*(-1)*frontLR+180*(frontLR+1)/2,1);
@@ -1449,6 +1513,13 @@
               var leftElbowFuture = calcWrist(pL[POSE_LANDMARKS.LEFT_WRIST],pL[POSE_LANDMARKS.LEFT_ELBOW],pL[POSE_LANDMARKS.LEFT_SHOULDER]);
               imageNode.push({x:rightElbowFuture.x*canvasElement.width,y:rightElbowFuture.y*canvasElement.height});
               imageNode.push({x:leftElbowFuture.x*canvasElement.width,y:leftElbowFuture.y*canvasElement.height});
+              if(slowcnt>=8 && Math.floor(slowcnt)==slowcnt){
+                setTimeout(function(){
+                  SE[20].currentTime = 0;
+                  SE[20].play();
+                },800);
+                slowcnt=slowcnt+0.1;
+              }
               trainingPattern = 2.1;
               trainingTimer = new Date();
               slowPattern = 1;
@@ -1508,6 +1579,13 @@
               break;
             case 3.0://初期設定
               trainingPattern = 3.1;
+              if(slowcnt>=8 && Math.floor(slowcnt)==slowcnt){
+                setTimeout(function(){
+                  SE[20].currentTime = 0;
+                  SE[20].play();
+                },800);
+                slowcnt=slowcnt+0.1;
+              }
               trainingTimer = new Date();
               imageNode.push({x:pL[POSE_LANDMARKS.RIGHT_SHOULDER].x*canvasElement.width,y:pL[POSE_LANDMARKS.RIGHT_SHOULDER].y*canvasElement.height});
               imageNode.push({x:pL[POSE_LANDMARKS.LEFT_SHOULDER].x*canvasElement.width,y:pL[POSE_LANDMARKS.LEFT_SHOULDER].y*canvasElement.height});
@@ -1525,7 +1603,7 @@
               break;
             case 3.2:
               trainingPattern = 3.3;
-              shoulderHighest = 9999.0;
+              //shoulderHighest = 9999.0;
               //canvasCtx.drawImage(Image["upallow"],imageNode[0].x-25,imageNode[0].y-50*rate-25,50,50*rate);
               //canvasCtx.drawImage(Image["upallow"],imageNode[1].x-25,imageNode[1].y-50*rate-25,50,50*rate);
               break;
@@ -1586,6 +1664,13 @@
               }else{
                 //imageNode.push({x:640,y:360});
                 imageNode.push({x:pL[POSE_LANDMARKS.LEFT_KNEE].x*canvasElement.width,y:pL[POSE_LANDMARKS.LEFT_KNEE].y*canvasElement.height});
+              }
+              if(slowcnt>=16 && Math.floor(slowcnt)==slowcnt){
+                setTimeout(function(){
+                  SE[20].currentTime = 0;
+                  SE[20].play();
+                },800);
+                slowcnt=slowcnt+0.1;
               }
               slowPattern = 1;
               break;
@@ -1759,7 +1844,7 @@
           SE[0].currentTime = 0;
           SE[0].play();
           startButton.disabled = true;
-          setTimeout(startTraining,3000,Number(inputbar.value)+4);
+          setTimeout(function(){trainingTimer = new Date();startTraining(Number(inputbar.value)+4);},3000);
           correct = 0;
         });
 
@@ -1943,6 +2028,8 @@
             /*}else if(trainingNow==4){
               var resulttxt2 = "<h1>股の角度:"+resultAngle.crotch.angle+"°</h1>";
               angleElement.innerHTML = resulttxt2;*/
+            }else if(((trainingNow==2||trainingNow==3)&&(slowcnt>=8.1))||((trainingNow==1||trainingNow==4)&&(slowcnt>=16.1))){
+              angleElement.innerHTML = "<h1>ゆっくり動くことを意識しましょう</h1>";
             }else{
               angleElement.innerHTML = "";
             }
@@ -1967,6 +2054,8 @@
               case 7:
                 calcAdjust(results);
               case 8:
+                calcAdjust(results);
+              case 7.5:
                 calcAdjust(results);
               default:
                 break;
