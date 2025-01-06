@@ -139,6 +139,8 @@
     var slowTimer;
     var slowNode = [];//ゆっくり動かすときの角度や高さの取得,0がtrainingNow,1以降からデータ
     var slowcnt = 0;
+    var slowflag = 0;
+    var judgeflag = 0;
     var trainingcnt = 0;
     var pubresults;
     var pubresultAngle;
@@ -900,28 +902,37 @@
         if(tmode==1){
           var snsum = speedNode[snl-2]+speedNode[snl-1]+speedNode[snl]+((trainingcnt%2)*2-1)*(Math.abs(speedNode[snl-2])+Math.abs(speedNode[snl-1])+Math.abs(speedNode[snl]));//整流にする、+だけか-だけかに
           snsum = Math.abs(snsum)/2;
+          slowflag = 1;
           if(snsum<10){
             slowcnt++;
+            slowflag = -1;
             console.log("slow1");
           }
         }else if(tmode==2){
           var snsumR = speedNode[snl-4]+speedNode[snl-2]+speedNode[snl]+((trainingcnt%2)*2-1)*(Math.abs(speedNode[snl-4])+Math.abs(speedNode[snl-2])+Math.abs(speedNode[snl]));//整流にする、+だけか-だけかに
           var snsumL = speedNode[snl-5]+speedNode[snl-3]+speedNode[snl-1]+((trainingcnt%2)*2-1)*(Math.abs(speedNode[snl-5])+Math.abs(speedNode[snl-3])+Math.abs(speedNode[snl-1]));//整流にする、+だけか-だけかに
           snsum = (Math.abs(snsumL)+Math.abs(snsumR))/4;
+          slowflag = 1;
           if(snsum<8){
             slowcnt++;
+            slowflag = -1;
             console.log("slow2");
           }
         }else if(tmode==3){
           var snsum = Math.abs(speedNode[snl-2])+Math.abs(speedNode[snl-1])+Math.abs(speedNode[snl]);//整流にする、+だけか-だけかに
-          console.log("slow3");
+          console.log("normal3");
+          slowflag = 1;
           if(snsum<5){
             slowcnt++;
+            slowflag = -1;
+            console.log("slow3");
           }
         }else if(tmode==4){
           var snsum = speedNode[snl-2]+speedNode[snl-1]+speedNode[snl]+((trainingcnt%2)*2-1)*(Math.abs(speedNode[snl-2])+Math.abs(speedNode[snl-1])+Math.abs(speedNode[snl]));//整流にする、+だけか-だけかに
+          slowflag = 1;
           if(snsum<5){
             slowcnt++;
+            slowflag = -1;
             console.log("slow4");
           }
         }
@@ -1396,10 +1407,26 @@
         function drawTrainingImage(results){
           var pL = results.poseLandmarks;
 
-          if(correct>=1){
+
+          /*if(correct>=1 && slowflag==1){//三角形の表示→なんかタイミングおかしいので要チェック
             canvasCtx.drawImage(Image["circle"],0,0,150,150);
+          }else if(correct>=1 && slowflag==-1){
+            canvasCtx.drawImage(Image["triangle"],0,0,150,150);
           }else if(correct<0){
             canvasCtx.drawImage(Image["cross"],0,0,150,150);
+          }*/
+          if(judgeflag>=1){
+            if(correct>=0.1 && slowflag==1){//三角形の表示→なんかタイミングおかしいので要チェック
+              canvasCtx.drawImage(Image["circle"],0,0,150,150);
+            }else if(correct>=0.1 && slowflag==-1){
+              canvasCtx.drawImage(Image["triangle"],0,0,150,150);
+            }else if(correct<0){
+              canvasCtx.drawImage(Image["cross"],0,0,150,150);
+            }
+            if(judgeflag==1){
+              judgeflag += 1;
+              setTimeout(function(){judgeflag = 0;},2000);
+            }
           }
 
           //imageNodeで座標を記載→canvasCtx.drawImageで描画してる
@@ -1444,7 +1471,9 @@
                 correctList.push(correct);
                 correct = 0.1;
               }
+              slowflag = 0;
               slowPattern = 2;
+              judgeflag = 1;
               break;
             case 1.3://膝キープ
               var now = new Date();
@@ -1501,8 +1530,10 @@
                 correctList.push(correct);
                 correct = 0.1;
               }
+              slowflag = 0;
               trainingLR = trainingLR*-1;
               slowPattern = 2;
+              judgeflag = 1;
               break;
             case 2.0://初期設定
               //canvasCtx.drawImage(Image["upallow"],pL[POSE_LANDMARKS.RIGHT_WRIST].x*canvasElement.width,pL[POSE_LANDMARKS.RIGHT_WRIST].y*canvasElement.height,50,50);
@@ -1545,6 +1576,7 @@
                 correct = 0.1;
               }
               slowPattern = 2;
+              judgeflag = 1;
               break;
             case 2.3://肘曲げ
               var now = new Date();
@@ -1576,6 +1608,7 @@
                 correct = 0.1;
               }
               slowPattern = 2;
+              judgeflag = 1;
               break;
             case 3.0://初期設定
               trainingPattern = 3.1;
@@ -1621,6 +1654,7 @@
               imageNode.push({x:pL[POSE_LANDMARKS.RIGHT_SHOULDER].x*canvasElement.width,y:pL[POSE_LANDMARKS.RIGHT_SHOULDER].y*canvasElement.height});
               imageNode.push({x:pL[POSE_LANDMARKS.LEFT_SHOULDER].x*canvasElement.width,y:pL[POSE_LANDMARKS.LEFT_SHOULDER].y*canvasElement.height});
               slowPattern = 2;
+              judgeflag = 1;
               break;
             case 3.5:
               var now = new Date();
@@ -1653,6 +1687,7 @@
               trainingPattern = 0.0;
               imageNode = [];
               slowPattern = 2;
+              judgeflag = 1;
               break;
 
             case 4.0://初期設定
@@ -1697,7 +1732,9 @@
                 correctList.push(correct);
                 correct = 0.1;
               }
+              slowflag = 0;
               slowPattern = 2;
+              judgeflag = 1;
               break;
             case 4.3://足下げ
               var now = new Date();
@@ -1727,8 +1764,10 @@
                 correctList.push(correct);
                 correct = 0.1;
               }
+              slowflag = 0;
               trainingLR = trainingLR*-1;
               slowPattern = 2;
+              judgeflag = 1;
               break;
 
             case 5.0:
@@ -2031,7 +2070,7 @@
             }else if(((trainingNow==2||trainingNow==3)&&(slowcnt>=8.1))||((trainingNow==1||trainingNow==4)&&(slowcnt>=16.1))){
               angleElement.innerHTML = "<h1>ゆっくり動くことを意識しましょう</h1>";
             }else{
-              angleElement.innerHTML = "";
+              angleElement.innerHTML = "correct:"+correct+",slowflag:"+slowflag;
             }
             switch (trainingNow) {
               case 1:
