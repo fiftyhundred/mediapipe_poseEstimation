@@ -57,6 +57,7 @@
       <option value="2">トレーニング2</option>
       <option value="3">トレーニング3</option>
       <option value="4">トレーニング4</option>
+      <option value="5">トレーニング4(表側)</option>
     </select>
     <input type="text" id="user" required size="10" value = "000">
     <!--<input type="text" id="front" required size="10" value = "1">
@@ -135,6 +136,8 @@
     var imageNode = [];//画像の座標保管
     var correct = 0;
     var shoulderHighest = 9999.0;
+    var kariHighest = 9999.0;
+    var karistart = 9999.0;
     var slowPattern = 0;
     var slowTimer;
     var slowNode = [];//ゆっくり動かすときの角度や高さの取得,0がtrainingNow,1以降からデータ
@@ -614,6 +617,18 @@
           }else{
             correct = -0.5;
           }
+        }else if(trainingNow==9){//トレーニング4の角度(表側)
+          if(((bAngle<=15 && bAngle>=0)||(bAngle<=0 && bAngle>=-15))){
+            correct = 1;
+          }else{
+            if(bAngle<-15){
+              correct = -1;
+            }else if(bAngle>15){
+              correct = -2;
+            }else{
+              correct = -0.5;
+            }
+          }
         }
       }else if(trainingNow==7.5){//トレーニング3のつま先立ち
         var pL = pubresults.poseLandmarks;
@@ -627,7 +642,7 @@
       }
 
       if(correct==1){
-        if(trainingNow==5||trainingNow==6||trainingNow==7||trainingNow==8){
+        if(trainingNow==5||trainingNow==6||trainingNow==7||trainingNow==8||trainingNow==9){
           if(!doremiplay){
             doremiplay=true;
             SE[18].play();
@@ -651,7 +666,7 @@
           imageElement.hidden = true;
           imageCellElement.hidden = true;
           rate = 0;
-          if(trainingNow==5||trainingNow==6||trainingNow==7.5||trainingNow==8){//if(trainingNow==5||trainingNow==6||trainingNow==7||trainingNow==8){
+          if(trainingNow==5||trainingNow==6||trainingNow==7.5||trainingNow==8||trainingNow==9){//if(trainingNow==5||trainingNow==6||trainingNow==7||trainingNow==8){
             //setTimeout(startEvent,3000);
             SE[17].currentTime = 0;
             SE[17].play();
@@ -679,7 +694,8 @@
           }else if(trainingNow==7.5){
             setTimeout(startTraining,5000,3);
             console.log(shoulderHighest);
-          }else if(trainingNow==8){
+            kariHighest = shoulderHighest;
+          }else if(trainingNow==8||trainingNow==9){
             setTimeout(startTraining,5000,4);
           }
           SE[18].pause();
@@ -734,10 +750,16 @@
             angle = resultAngle.leftHip.angle;
           }*/
         }
+        if(trainingPattern==3.0){
+          karistart = (results.poseLandmarks[POSE_LANDMARKS.RIGHT_SHOULDER].y+results.poseLandmarks[POSE_LANDMARKS.LEFT_SHOULDER].y)/2;
+        }
         if(trainingPattern>=3.2 && trainingPattern<=3.6){
           var shoulderHeight = (results.poseLandmarks[POSE_LANDMARKS.RIGHT_SHOULDER].y+results.poseLandmarks[POSE_LANDMARKS.LEFT_SHOULDER].y)/2;
           if(shoulderHighest>=shoulderHeight){//座標は下の方ほどでかい(原点が左上)
             shoulderHighest = shoulderHeight;
+          }
+          if(karistart-shoulderHeight>=(karistart-kariHighest)*0.8){
+            correct = 1.0;
           }
         }
         switch (trainingPattern) {
@@ -1653,6 +1675,11 @@
               trainingTimer = new Date();
               imageNode.push({x:pL[POSE_LANDMARKS.RIGHT_SHOULDER].x*canvasElement.width,y:pL[POSE_LANDMARKS.RIGHT_SHOULDER].y*canvasElement.height});
               imageNode.push({x:pL[POSE_LANDMARKS.LEFT_SHOULDER].x*canvasElement.width,y:pL[POSE_LANDMARKS.LEFT_SHOULDER].y*canvasElement.height});
+              if(correct<1){
+                correct = -1;
+              }else{
+                correct = 0.1;
+              }
               slowPattern = 2;
               judgeflag = 1;
               break;
@@ -1686,6 +1713,11 @@
               trainingTimer = new Date();
               trainingPattern = 0.0;
               imageNode = [];
+              if(correct<1){
+                correct = -1;
+              }else{
+                correct = 0.1;
+              }
               slowPattern = 2;
               judgeflag = 1;
               break;
@@ -2062,15 +2094,15 @@
 
             //resulttxt = resulttxt+"<br>"+JSON.stringify(correctList);
             //resulttxt = resulttxt+"<br>"+JSON.stringify(sHList);
-            if(trainingNow==5||trainingNow==6||trainingNow==7||trainingNow==8){
+            if(trainingNow==5||trainingNow==6||trainingNow==7||trainingNow==8||trainingNow==9){
               angleElement.innerHTML = resulttxt;//JSON.stringify(resultAngle);
             /*}else if(trainingNow==4){
               var resulttxt2 = "<h1>股の角度:"+resultAngle.crotch.angle+"°</h1>";
               angleElement.innerHTML = resulttxt2;*/
-            }else if(((trainingNow==2||trainingNow==3)&&(slowcnt>=8.1))||((trainingNow==1||trainingNow==4)&&(slowcnt>=16.1))){
+            }else if(((trainingNow==2||trainingNow==3)&&(slowcnt>=6.1))||((trainingNow==1||trainingNow==4)&&(slowcnt>=12.1))){
               angleElement.innerHTML = "<h1>ゆっくり動くことを意識しましょう</h1>";
             }else{
-              angleElement.innerHTML = "correct:"+correct+",slowflag:"+slowflag;
+              //angleElement.innerHTML = "correct:"+correct+",slowflag:"+slowflag;
             }
             switch (trainingNow) {
               case 1:
@@ -2095,6 +2127,8 @@
               case 8:
                 calcAdjust(results);
               case 7.5:
+                calcAdjust(results);
+              case 9:
                 calcAdjust(results);
               default:
                 break;
