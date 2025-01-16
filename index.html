@@ -940,8 +940,9 @@
           }
         }else if(tmode==4){
           var snsum = speedNode[snl-2]+speedNode[snl-1]+speedNode[snl]+((trainingcnt%2)*2-1)*(Math.abs(speedNode[snl-2])+Math.abs(speedNode[snl-1])+Math.abs(speedNode[snl]));//整流にする、+だけか-だけかに
+          snsum = Math.abs(snsum)/2;
           slowflag = 1;
-          if(snsum<5){
+          if(snsum<10){
             slowcnt++;
             slowflag = -1;
             console.log("slow4");
