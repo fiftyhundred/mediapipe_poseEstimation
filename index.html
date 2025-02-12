@@ -5,6 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=9">
+    <!--大体ここら辺以下がBlazePose-->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils_3d/control_utils_3d.js" crossorigin="anonymous"></script>
@@ -17,57 +18,27 @@
     <video class="input_video" muted crossorigin="anonymous" hidden></video>
     <table>
       <tr>
-          <td class="canvas_cell"><canvas class="output_canvas" width="1280px" height="720px"></canvas></td>
-          <td class="video_cell"><video class="model_video" muted hidden crossorigin="anonymous" width="360px" height="640px" ></video></td><!-- src="0_2_.mp4"-->
-          <td class="image_cell" hidden><img class="model_image" src="image/leftchest.png" crossorigin="anonymous" width="360px" height="640px"></td>
-          <td class="results_cell" hidden>
-              <!--
-              <table width="600" border="1">
-                <tr>
-                  <th colspan="9">膝の曲げ伸ばし</th>
-                </tr>
-                <tr height="50">
-                  <td rowspan="3" width="200"><img src="image/training1.png" width="200"></td>
-                  <td align="center">1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td>
-                </tr>
-                <tr height="50">
-                  <td width="45"><img src="image/circle.png" height="45"></td>
-                  <td width="45"><img src="image/circle.png" height="45"></td>
-                  <td width="45"><img src="image/circle.png" height="45"></td>
-                  <td width="45"><img src="image/circle.png" height="45"></td>
-                  <td width="45"><img src="image/circle.png" height="45"></td>
-                  <td width="45"><img src="image/circle.png" height="45"></td>
-                  <td width="45"><img src="image/circle.png" height="45"></td>
-                  <td width="45"><img src="image/circle.png" height="45"></td>
-                </tr>
-                <tr>
-                  <td colspan="8">testet</td>
-                </tr>
-              </table>
-              -->
+          <td class="canvas_cell"><canvas class="output_canvas" width="1280px" height="720px"></canvas></td><!--canvas, 映像の上から描いたものを載せたりする-->
+          <td class="video_cell"><video class="model_video" muted hidden crossorigin="anonymous" width="360px" height="640px" ></video></td><!--左側の映像 src="hoge.mp4"とかすると既存のvideoが使えたりするかも。既存videoでやるならtest用のhtml新しく作ってやるのが吉-->
+          <td class="image_cell" hidden><img class="model_image" src="image/leftchest.png" crossorigin="anonymous" width="360px" height="640px"></td><!--右側の画像とか見本映像とか-->
           </td>
       </tr>
     </table>
-    <div class="landmark-grid-container" hidden></div>
-    <div id="angle"></div>
-    <!--<input type="text" id="Tpattern" required size="10" value = "1.0">
-    -->
-    <select id="Tpattern">
+    <div class="landmark-grid-container" hidden></div><!--BlazePoseの体の線のやつ-->
+    <div id="angle"></div><!--画面下のメッセージ等など-->
+    <select id="Tpattern"><!--トレーニングの種類-->
       <option value="1">トレーニング1</option>
       <option value="2">トレーニング2</option>
       <option value="3">トレーニング3</option>
-      <option value="4">トレーニング4</option>
-      <option value="5">トレーニング4(表側)</option>
+      <option value="4">トレーニング4</option><!--後ろ向き-->
+      <option value="5">トレーニング4(表側)</option><!--正面から,実験で使ったのはこっち-->
     </select>
-    <input type="text" id="user" required size="10" value = "000">
-    <!--<input type="text" id="front" required size="10" value = "1">
-    <input type="text" id="count" required size="10" value = "8">
-  -->
-    <select id="front">
+    <input type="text" id="user" required size="10" value = "000"><!--被験者名-->
+    <select id="front"><!--実質運動1用,右向きか左向きで体操-->
       <option value="1">右</option>
       <option value="-1">左</option>
     </select>
-    <select id="count">
+    <select id="count"><!--運動回数-->
       <option value="0">運動回数</option>
       <option value="1">1</option>
       <option value="2">2</option>
@@ -79,14 +50,16 @@
       <option value="8">8</option>
     </select>
     <button id="start">Start</button>
-    <button id="fin">Fin</button>
-    <!--<button id="results">Results</button>-->
-    <button id="grid">grid</button>
-    <input type="checkbox" id="autosave" name="autosave">
+    <button id="fin">Fin</button><!--記録出力-->
+    <button id="grid">grid</button><!--BlazePoseの体の線の表示切替-->
+    <input type="checkbox" id="autosave" name="autosave"><!--チェック入れると運動後に自動セーブ-->
     <label for="autosave">autosave</label>
 </div>
+<!--Htmlの表示部分ここまで-->
 
+<!--こっからスクリプト-->
 <script type="module">
+    //ここら辺でhtmkのelementを変数につっこんでる
     const videoElement = document.getElementsByClassName('input_video')[0];
     const canvasElement = document.getElementsByClassName('output_canvas')[0];
     const modelElement = document.getElementsByClassName('model_video')[0];
@@ -94,10 +67,10 @@
     const canvasCtx = canvasElement.getContext("2d");
     const canvasCellElement = document.getElementsByClassName('canvas_cell')[0];
     const videoCellElement = document.getElementsByClassName('video_cell')[0];
-    const resultsCellElement = document.getElementsByClassName('results_cell')[0];
     const imageCellElement = document.getElementsByClassName('image_cell')[0];
     const angleElement = document.getElementById("angle");
     const landmarkContainer = document.getElementsByClassName('landmark-grid-container')[0];
+    //BlazePoseの体の線のやつの設定
     const grid = new LandmarkGrid(landmarkContainer,{
         connectionColor: 0xCCCCCC,
         definedColors:
@@ -120,37 +93,37 @@
     const gridButton = document.getElementById('grid');
     const autosaveCheck = document.getElementById('autosave');
 
+    //初期設定でstartButtonは押せない, 体操回数を設定すると押せるように
     startButton.disabled = true;
 
-    var starttime = new Date();
-    var trainingTimer = new Date();
-    var writing = "";
-    var oncedownload = true;
-    var countms = 1000;
-    var cnt = 0;
-    var trainingPattern = 0.0;
-    var trainingLR = 0;
-    var frontLR = frontbar.value;
-    var exerciseCount = countbar.value;
-    var trainingNow = 0;
-    var imageNode = [];//画像の座標保管
-    var correct = 0;
-    var shoulderHighest = 9999.0;
-    var kariHighest = 9999.0;
-    var karistart = 9999.0;
-    var slowPattern = 0;
-    var slowTimer;
+    var starttime = new Date();//アプリ起動の時間。記録用で取ったけどなんか使ってなさそう
+    var trainingTimer = new Date();//トレーニング開始の時間。現在の時間から差分取って使う
+    var oncedownload = true;//多分既存ビデオでtestしてたときの名残
+    var countms = 1000;//号令1回の秒数
+    var cnt = 0;//号令が何個目かを記録する用。変数名修正したほうがいい
+    var trainingPattern = 0.0;//現在のトレーニング状態。小数値で運動動作の道中。マイナス値はその運動の体の向きの準備
+    var trainingLR = 0;//右向きの運動か左向きの運動か。正面からでは困難な運動に使う
+    var frontLR = frontbar.value;//htmlに記載したの体の向きを受け取る用
+    var exerciseCount = countbar.value;//運動回数。htmlから受け取る
+    var trainingNow = 0;//今なんのトレーニングしているか。基本整数値。マイナス値はその運動の体の向きの準備
+    var imageNode = [];//画像の座標保管。運動中の運動補助に使おうとしたけど使ってないかも。
+    var correct = 0;//運動が成功かどうか示す用。
+    var shoulderHighest = 9999.0;//運動した中で最も高い肩の高さ(運動3で使用)
+    var kariHighest = 9999.0;//肩の高さの初期設定で使用
+    var karistart = 9999.0;//同上
+    var slowPattern = 0;//早い動作の検知をするためのやつ。
+    var slowTimer;//早い動作の検知のsetInterval用の変数。面倒だからglobalにしちゃえってした覚えあり(良くないので可能なら修正して)
     var slowNode = [];//ゆっくり動かすときの角度や高さの取得,0がtrainingNow,1以降からデータ
-    var slowcnt = 0;
-    var slowflag = 0;
-    var judgeflag = 0;
-    var trainingcnt = 0;
-    var faultcnt = 0;
-    var pubresults;
-    var pubresultAngle;
-    var sHList = [];//shoulderHighestList
-    var correctList = [];
-    var correctResults = {
+    var slowcnt = 0;//何回早い動作を行ったか
+    var slowflag = 0;//多分早い動作の検知のフラグ,boolean的使い方をしている
+    var judgeflag = 0;//corrent用のフラグ
+    var trainingcnt = 0;//何回トレーニングしたか
+    var faultcnt = 0;//何回動作が小さい運動をしたか
+    var pubresults;//result(blazeposeからのデータ)をglobalで使いたかった
+    var pubresultAngle;//resultAngle(resultから計算したデータ)をglobalで使いたかった。localで扱うのが面倒だった。
+    var sHList = [];//shoulderHighestList,shoulderHigestを計算するための記録用リスト
+    var correctList = [];//成功回数の記録リスト、多分使い方を更新した方が良い
+    var correctResults = {//記録出力用のやつ
       "1R":[],
       "1L":[],
       "1Comment":0,
@@ -164,10 +137,10 @@
       "4L":[],
       "4Comment":0,
     };
-    var gridShow = -1;
+    var gridShow = -1;//BlazePoseの体の線のやつの切替用変数
 
 
-    const Image = {
+    const Image = {//画像
       "upallow":document.createElement('img'),
       "downallow":document.createElement('img'),
       "circle":document.createElement('img'),
@@ -205,7 +178,7 @@
     Image["frontchest"].src = 'image/frontchest.png';
     Image["rearchest"].src = 'image/rearchest.png';
 
-    const SE = {
+    const SE = {//音声、スクリプト中で番号で処理しているの可読性カスだから直してくれ
       0:new Audio('SE/start.mp3'),
       1:new Audio('SE/1.mp3'),
       2:new Audio('SE/2.mp3'),
@@ -231,9 +204,9 @@
       22:new Audio('SE/bigly.mp3'),
     };
 
-    var doremiplay = false;
+    var doremiplay = false;//体の向き調整中に正しい向きだと「ドレミ～」となるやつのflag
 
-    function canvasResize(){
+    function canvasResize(){//ブラウザの大きさによって画像比整えるやつ
       canvasElement.width = document.body.clientWidth*2/3;
       canvasElement.height = canvasElement.width/16*9;
       modelElement.width = document.body.clientWidth/3;
@@ -249,24 +222,10 @@
 
     }
     canvasResize();
-    window.onload = canvasResize;
-    window.onclick = canvasResize;
+    window.onload = canvasResize;//load時
+    window.onclick = canvasResize;//クリック毎
 
-    /*resultsButton.addEventListener('click', function () {
-      if(resultsButton.innerHTML=="Results"){
-        resultsButton.innerHTML="Video"
-        resultsCellElement.hidden = false;
-        canvasCellElement.hidden = true;
-        showResultTable();
-      }else{
-        resultsButton.innerHTML="Results"
-        resultsCellElement.hidden = true;
-        canvasCellElement.hidden = false;
-      }
-    });*/
-
-
-    function saveCorrectResults(pattern){
+    function saveCorrectResults(pattern){//correctの結果を保存するやつ
       var muki = "";
       if(frontLR==1){
         muki = "R";
@@ -343,116 +302,12 @@
           7: "",
       };
       cells.push(cell);
-
     }
-
-//運動結果を表とかで出そうとしたけど上手くいかんかったからボツにしたやつ
-    /*function showResultTable(){
-      while(resultsCellElement.firstChild){
-        resultsCellElement.removeChild(resultsCellElement.firstChild);
-      }
-      for (var i = 1; i <= 4; i++) {
-        if(correctResults[String(i)+"R"].length>0 && correctResults[String(i)+"L"].length>0){
-          var cList = [];
-          for (var i = 0; i < correctResults[String(i)+"R"].length; i++) {
-            newList.push(correctResults[String(i)+"R"][i]+correctResults[String(i)+"L"][i]);
-          }
-          //resultsCellElement.appendChild(makeResultTable(i,cList));
-        }
-      }
-    }*/
-
-//運動結果を表とかで出そうとしたけど上手くいかんかったからボツにしたやつ
-/*
-    function makeResultTable(Tpattern,cList){
-      var newtable = document.createElement("table");
-      newtable.width = 600;
-      newtable.border = 1;
-
-      //tableの1行目
-      var tr1 = document.createElement("tr");
-      var th1 = document.createElement("th");
-      th1.colSpan = 9;
-      th1.innerHTML = trainingName[Tpattern];
-      tr1.appendChild(th1);
-      newtable.appendChild(tr1);
-
-      //tableの2行目
-      var tr2 = document.createElement("tr");
-      tr2.height = 50;
-      var td0 = document.createElement("td");
-      td0.rowSpan = 3;
-      td0.width = 200;
-      var trainingImg = Image["training"+String(Tpattern)];
-      trainingImg.width = 200;
-      td0.appendChild(trainingImg);
-      tr2.appendChild(td0);
-      for(let i=1;i<=8;i++){
-        var td = document.createElement("td");
-        td.align = "center";
-        td.innerHTML = i;
-        td.width = 45;
-        td.height = 45;
-        tr2.appendChild(td);
-      }
-      newtable.appendChild(tr2);
-
-      //tableの3行目
-      var tr3 = document.createElement("tr");
-
-      for(let i=0;i<8;i++){
-        var td = document.createElement("td");
-        td.align = "center";
-        td.width = 45;
-        td.height = 45;
-        var correctImg = document.createElement("img");
-        switch (Tpattern) {
-          case 1:
-
-            break;
-          case 2:
-
-            break;
-          case 3:
-
-            break;
-          case 4:
-
-            break;
-          default:
-
-        }
-
-        if(cList[i]>=1){
-          correctImg.src = Image["circle"].src;
-        }else if(cList[i]<=-1){
-          correctImg.src = Image["cross"].src;
-        }
-        correctImg.height = 45;
-        td.appendChild(correctImg);
-
-        tr3.appendChild(td);
-      }
-      tr3.height = 50;
-      newtable.appendChild(tr3);
-
-      //tableの4行目
-      var tr4 = document.createElement("tr");
-      var tdc = document.createElement("td");
-      tdc.colSpan = 8;
-      tdc.innerHTML = "comment";
-      tr4.appendChild(tdc);
-      newtable.appendChild(tr4);
-
-      return newtable;
-    }
-*/
-
 
     //取得したい角度のポイント
     //もちろん真ん中が原点となるポイントになるように書いてね
     //-1はposeWorldMarkerの原点ってことで1つ
-    //関節スコアの参照 -> https://google.github.io/mediapipe/solutions/pose.html#pose-landmark-model-blazepose-ghum-3d
+    //関節スコアの参照 -> https://developers.google.com/ml-kit/vision/pose-detection?hl=ja
     var needVector = {
         // "rightUde":[12,14,16],
         // "leftUde":[11,13,15],
@@ -642,17 +497,6 @@
         }
         if(rate>1){
           //終了時処理
-          /*SE[0].currentTime = 0;
-          SE[0].play();
-          startButton.disabled = true;
-          correct = 0;
-          imageElement.hidden = true;
-          imageCellElement.hidden = true;
-          if(trainingNow==5){
-            setTimeout(startTraining,3000,1.0);
-          }else if(trainingNow==6){
-            setTimeout(startTraining,3000,4.0);
-          }*/
 
           correct = 0;
           imageElement.hidden = true;
@@ -735,12 +579,6 @@
           }
         }else if(trainingPattern>=4 && trainingPattern<5){
           angle = resultAngle.crotch.angle2d;
-
-          /*if(trainingLR==1){
-            angle = resultAngle.rightHip.angle;
-          }else{
-            angle = resultAngle.leftHip.angle;
-          }*/
         }
         if(trainingPattern==3.0){
           karistart = (results.poseLandmarks[POSE_LANDMARKS.RIGHT_SHOULDER].y+results.poseLandmarks[POSE_LANDMARKS.LEFT_SHOULDER].y)/2;
