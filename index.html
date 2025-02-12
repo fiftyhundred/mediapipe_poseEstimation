@@ -545,9 +545,9 @@
       }
       var kneeVector = calcAngle(hip,knee,ankle);
       var kAngle = kneeVector.angle;
-      if(trainingNow==5){//トレーニング1の角度
+      if(trainingNow==-1){//トレーニング1の角度
         if(frontLR==1){
-          if((bAngle>=50 && bAngle<=70) && kAngle<=110){//if((bAngle>=40 && bAngle<=70)){
+          if((bAngle>=50 && bAngle<=70) ){//if((bAngle>=40 && bAngle<=70)){
             correct = 1;
           }else{
             if(bAngle<50){
@@ -571,7 +571,7 @@
             }
           }
         }
-      }else if(trainingNow==6){//トレーニング2の角度
+      }else if(trainingNow==-2){//トレーニング2の角度
         if(((bAngle<=15 && bAngle>=0)||(bAngle<=0 && bAngle>=-15))){
           correct = 1;
         }else{
@@ -583,7 +583,7 @@
             correct = -0.5;
           }
         }
-      }else if(trainingNow==7){//トレーニング3の角度
+      }else if(trainingNow==-3){//トレーニング3の角度
         if(((bAngle<=15 && bAngle>=0)||(bAngle<=0 && bAngle>=-15))){
           correct = 1;
         }else{
@@ -595,7 +595,7 @@
             correct = -0.5;
           }
         }
-      }else if(trainingNow==8){//トレーニング4の角度
+      }else if(trainingNow==-4){//トレーニング4の角度
         if(((bAngle>=160 && bAngle<=180)||(bAngle>=-180 && bAngle<=-160))  && kAngle>=140){
           correct = 1;
         }else{
@@ -607,7 +607,7 @@
             correct = -0.5;
           }
         }
-      }else if(trainingNow==9){//トレーニング4の角度(表側)
+      }else if(trainingNow==-4.5){//トレーニング4の角度(表側)
         if(((bAngle<=15 && bAngle>=0)||(bAngle<=0 && bAngle>=-15))){
           correct = 1;
         }else{
@@ -619,7 +619,7 @@
             correct = -0.5;
           }
         }
-      }else if(trainingNow==7.5){//トレーニング3のつま先立ち
+      }else if(trainingNow==-3.5){//トレーニング3のつま先立ち
         var pL = pubresults.poseLandmarks;
         var yR = pL[POSE_LANDMARKS.RIGHT_SHOULDER].y;
         var yL = pL[POSE_LANDMARKS.LEFT_SHOULDER].y;
@@ -631,7 +631,7 @@
       }
 
       if(correct==1){
-        if(trainingNow==5||trainingNow==6||trainingNow==7||trainingNow==8||trainingNow==9){
+        if(trainingNow==-1||trainingNow==-2||trainingNow==-3||trainingNow==-4||trainingNow==-4.5){
           if(!doremiplay){
             doremiplay=true;
             SE[18].play();
@@ -655,7 +655,7 @@
           imageElement.hidden = true;
           imageCellElement.hidden = true;
           rate = 0;
-          if(trainingNow==5||trainingNow==6||trainingNow==7.5||trainingNow==8||trainingNow==9){//if(trainingNow==5||trainingNow==6||trainingNow==7||trainingNow==8){
+          if(trainingNow==-1||trainingNow==-2||trainingNow==-3.5||trainingNow==-4||trainingNow==-4.5){//if(trainingNow==5||trainingNow==6||trainingNow==7||trainingNow==8){
             //setTimeout(startEvent,3000);
             SE[17].currentTime = 0;
             SE[17].play();
@@ -667,11 +667,11 @@
               correct = 0;
             },3000);
           }
-          if(trainingNow==5){
+          if(trainingNow==-1){
             setTimeout(startTraining,5000,1);
-          }else if(trainingNow==6){
+          }else if(trainingNow==-2){
             setTimeout(startTraining,5000,2);
-          }else if(trainingNow==7){
+          }else if(trainingNow==-3){
             cnt = -1;
             var timer1;
             setTimeout(function(){trainingNow = 7.5;trainingTimer = new Date();timer1 = setInterval(function(){playTrainingMusic([1,2,3,4,5],++cnt);correct = 1;},countms);},3000);
@@ -680,11 +680,11 @@
             SE[19].play();
             trainingTimer = new Date();
             shoulderHighest = 9999.0;
-          }else if(trainingNow==7.5){
+          }else if(trainingNow==-3.5){
             setTimeout(startTraining,5000,3);
             console.log(shoulderHighest);
             kariHighest = shoulderHighest;
-          }else if(trainingNow==8||trainingNow==9){
+          }else if(trainingNow==-4||trainingNow==-4.5){
             setTimeout(startTraining,5000,4);
           }
           SE[18].pause();
@@ -1103,6 +1103,21 @@
           }
         }
 
+        function resetTrainingVariable(){
+          trainingPattern = 0.0;
+          trainingNow=0;
+          slowcnt=0;
+          faultcnt=0;
+          shoulderHighest = 9999.0;
+          kariHighest = 9999.0;
+          karistart = 9999.0;
+          slowPattern = 0;
+          slowflag = 0;
+          judgeflag = 0;
+          trainingcnt = 0;
+          faultcnt = 0;
+        }
+
         //training設定
         function startTraining(pattern){
           correctList = [];
@@ -1117,7 +1132,21 @@
               cnt = -1;
               trainingLR = 1;
               var timer1 = setInterval(function(){playModelVideo(node,++cnt);playTrainingMusic(node,cnt);playTrainingImage(node,cnt,pattern);},countms);
-              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;slowcnt=0;faultcnt=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(1);savedata(autosaveCheck.checked);},(node.length*2*exerciseCount)*countms+100);
+              setTimeout(function(){
+                clearInterval(timer1);
+                startButton.disabled = false;
+
+                resetTrainingVariable();
+                /*trainingPattern = 0.0;
+                trainingNow=0;
+                slowcnt=0;
+                faultcnt=0;*/
+
+                modelElement.hidden = true;
+                videoCellElement.hidden = true;
+                saveCorrectResults(1);
+                savedata(autosaveCheck.checked);
+                },(node.length*2*exerciseCount)*countms+100);
               needVector = {
                   "rightKnee":[24,26,28],
                   "leftKnee":[23,25,27],
@@ -1134,7 +1163,22 @@
               var node = [-1,2,3,4,5,6,7,8,11,-2];
               cnt = -1;
               var timer1 = setInterval(function(){playModelVideo(node,++cnt);playTrainingMusic(node,cnt);playTrainingImage(node,cnt,pattern);},countms);
-              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;slowcnt=0;faultcnt=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(2);savedata(autosaveCheck.checked);},(node.length*exerciseCount-1)*countms+100);
+              setTimeout(function(){
+                clearInterval(timer1);
+                startButton.disabled = false;
+
+                resetTrainingVariable();
+                /*
+                trainingPattern = 0.0;
+                trainingNow=0;
+                slowcnt=0;
+                faultcnt=0;*/
+
+                modelElement.hidden = true;
+                videoCellElement.hidden = true;
+                saveCorrectResults(2);
+                savedata(autosaveCheck.checked);
+                },(node.length*exerciseCount-1)*countms+100);
               needVector = {
                   // "rightUde":[12,14,16],
                   // "leftUde":[11,13,15],
@@ -1150,7 +1194,22 @@
               var node = [-1,2,3,4,5,6,7,8,11,-2];
               cnt = -1;
               var timer1 = setInterval(function(){playModelVideo(node,++cnt);playTrainingMusic(node,cnt);playTrainingImage(node,cnt,pattern);},countms);
-              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;checksHList();trainingNow=0;slowcnt=0;faultcnt=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(3);savedata(autosaveCheck.checked);},(node.length*exerciseCount-1)*countms+100);
+              setTimeout(function(){
+                clearInterval(timer1);
+                startButton.disabled = false;
+                checksHList();
+
+                resetTrainingVariable();
+                /*trainingPattern = 0.0;
+                trainingNow=0;
+                slowcnt=0;
+                faultcnt=0;*/
+
+                modelElement.hidden = true;
+                videoCellElement.hidden = true;
+                saveCorrectResults(3);
+                savedata(autosaveCheck.checked);
+              },(node.length*exerciseCount-1)*countms+100);
               needVector = {
                   // "rightUde":[12,14,16],
                   // "leftUde":[11,13,15],
@@ -1167,7 +1226,21 @@
               cnt = -1;
               trainingLR = 1;
               var timer1 = setInterval(function(){playModelVideo(node,++cnt);playTrainingMusic(node,cnt);playTrainingImage(node,cnt,pattern);},countms);
-              setTimeout(function(){ clearInterval(timer1);startButton.disabled = false;trainingPattern = 0.0;trainingNow=0;slowcnt=0;faultcnt=0;modelElement.hidden = true;videoCellElement.hidden = true;saveCorrectResults(4);savedata(autosaveCheck.checked);},(node.length*2*exerciseCount)*countms+100);
+              setTimeout(function(){
+                clearInterval(timer1);
+                startButton.disabled = false;
+
+                resetTrainingVariable();
+                /*trainingPattern = 0.0;
+                trainingNow=0;
+                slowcnt=0;
+                faultcnt=0;*/
+
+                modelElement.hidden = true;
+                videoCellElement.hidden = true;
+                saveCorrectResults(4);
+                savedata(autosaveCheck.checked);
+              },(node.length*2*exerciseCount)*countms+100);
               needVector = {
                   "crotch":[27,-1,28],
               };
@@ -1185,8 +1258,8 @@
               modelElement.hidden = false;
               videoCellElement.hidden = false;
               break;
-            case 5.0:
-              trainingPattern = 5.0;
+            case -1.0:
+              trainingPattern = -1.0;
 
               if(frontLR==1){
                 SE[13].currentTime = 0;
@@ -1201,8 +1274,8 @@
               imageCellElement.hidden = false;
 
               break;
-            case 6.0:
-              trainingPattern = 6.0;
+            case -2.0:
+              trainingPattern = -2.0;
 
               SE[14].currentTime = 0;
               SE[14].play();
@@ -1212,8 +1285,8 @@
               imageCellElement.hidden = false;
             break;
 
-            case 7.0:
-              trainingPattern = 7.0;
+            case -3.0:
+              trainingPattern = -3.0;
 
               SE[15].currentTime = 0;
               SE[15].play();
@@ -1223,8 +1296,8 @@
               imageCellElement.hidden = false;
             break;
 
-            case 8.0:
-              trainingPattern = 8.0;
+            case -4.0:
+              trainingPattern = 4.0;
 
               SE[16].currentTime = 0;
               SE[16].play();
@@ -1233,8 +1306,8 @@
               imageElement.hidden = false;
               imageCellElement.hidden = false;
               break;
-            case 9.0:
-              trainingPattern = 9.0;
+            case -4.5:
+              trainingPattern = -4.5;
 
               SE[15].currentTime = 0;
               SE[15].play();
@@ -1811,7 +1884,7 @@
               judgeflag = 1;
               break;
 
-            case 5.0:
+            case -1.0:
               //canvasCtx.drawImage(Image["upallow"],0,0,150,150);
               var hipx = (pL[POSE_LANDMARKS.RIGHT_HIP].x + pL[POSE_LANDMARKS.LEFT_HIP].x)/2
               var hipy = (pL[POSE_LANDMARKS.RIGHT_HIP].y + pL[POSE_LANDMARKS.LEFT_HIP].y)/2
@@ -1839,7 +1912,7 @@
 
               break;
 
-            case 6.0:
+            case -2.0:
               var hipx = (pL[POSE_LANDMARKS.RIGHT_HIP].x + pL[POSE_LANDMARKS.LEFT_HIP].x)/2
               var hipy = (pL[POSE_LANDMARKS.RIGHT_HIP].y + pL[POSE_LANDMARKS.LEFT_HIP].y)/2
               //imageNode.push({x:hipx*canvasElement.width,y:hipy*canvasElement.height});
@@ -1861,7 +1934,7 @@
 
               break;
 
-            case 7.0:
+            case -3.0:
               var hipx = (pL[POSE_LANDMARKS.RIGHT_HIP].x + pL[POSE_LANDMARKS.LEFT_HIP].x)/2
               var hipy = (pL[POSE_LANDMARKS.RIGHT_HIP].y + pL[POSE_LANDMARKS.LEFT_HIP].y)/2
               //imageNode.push({x:hipx*canvasElement.width,y:hipy*canvasElement.height});
@@ -1883,7 +1956,7 @@
 
               break;
 
-            case 8.0:
+            case -4.0:
               var hipx = (pL[POSE_LANDMARKS.RIGHT_HIP].x + pL[POSE_LANDMARKS.LEFT_HIP].x)/2
               var hipy = (pL[POSE_LANDMARKS.RIGHT_HIP].y + pL[POSE_LANDMARKS.LEFT_HIP].y)/2
               //imageNode.push({x:hipx*canvasElement.width,y:hipy*canvasElement.height});
@@ -1905,7 +1978,7 @@
 
               break;
 
-            case 9.0:
+            case -4.5:
                 var hipx = (pL[POSE_LANDMARKS.RIGHT_HIP].x + pL[POSE_LANDMARKS.LEFT_HIP].x)/2
                 var hipy = (pL[POSE_LANDMARKS.RIGHT_HIP].y + pL[POSE_LANDMARKS.LEFT_HIP].y)/2
                 //imageNode.push({x:hipx*canvasElement.width,y:hipy*canvasElement.height});
@@ -1944,7 +2017,7 @@
           SE[0].currentTime = 0;
           SE[0].play();
           startButton.disabled = true;
-          setTimeout(function(){trainingTimer = new Date();startTraining(Number(inputbar.value)+4);},3000);
+          setTimeout(function(){trainingTimer = new Date();startTraining(Number(inputbar.value)*(-1.0));},3000);
           correct = 0;
         });
 
@@ -2123,7 +2196,7 @@
 
             //resulttxt = resulttxt+"<br>"+JSON.stringify(correctList);
             //resulttxt = resulttxt+"<br>"+JSON.stringify(sHList);
-            if(trainingNow==5||trainingNow==6||trainingNow==7||trainingNow==8||trainingNow==9){
+            if(trainingNow==-1.0||trainingNow==-2.0||trainingNow==-3.0||trainingNow==-4.0||trainingNow==-4.5){
               angleElement.innerHTML = resulttxt;//JSON.stringify(resultAngle);
             /*}else if(trainingNow==4){
               var resulttxt2 = "<h1>股の角度:"+resultAngle.crotch.angle+"°</h1>";
@@ -2156,17 +2229,17 @@
                 //cellUpdate(resultAngle.leftHip, resultAngle.rightHip,bodyAngle(results));
                 cellUpdate(resultAngle.crotch, resultAngle.crotch,bodyAngle(results));
                 break;
-              case 5:
+              case -1.0:
                 calcAdjust(results);
-              case 6:
+              case -2.0:
                 calcAdjust(results);
-              case 7:
+              case -3.0:
                 calcAdjust(results);
-              case 8:
+              case -4.0:
                 calcAdjust(results);
-              case 7.5:
+              case -3.5:
                 calcAdjust(results);
-              case 9:
+              case -4.5:
                 calcAdjust(results);
               default:
                 break;
